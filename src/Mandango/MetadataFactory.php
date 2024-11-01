@@ -11,6 +11,8 @@
 
 namespace Mandango;
 
+use LogicException;
+
 /**
  * Metadata.
  *
@@ -32,7 +34,7 @@ abstract class MetadataFactory
      *
      * @return array The classes.
      */
-    public function getClasses()
+    public function getClasses(): array
     {
         return array_keys($this->classes);
     }
@@ -42,9 +44,9 @@ abstract class MetadataFactory
      *
      * @return array The classes of documents.
      */
-    public function getDocumentClasses()
+    public function getDocumentClasses(): array
     {
-        $classes = array();
+        $classes = [];
         foreach ($this->classes as $class => $isEmbedded) {
             if (!$isEmbedded) {
                 $classes[] = $class;
@@ -59,9 +61,9 @@ abstract class MetadataFactory
      *
      * @return array The classes of embeddeds documents.
      */
-    public function getEmbeddedDocumentClasses()
+    public function getEmbeddedDocumentClasses(): array
     {
-        $classes = array();
+        $classes = [];
         foreach ($this->classes as $class => $isEmbedded) {
             if ($isEmbedded) {
                 $classes[] = $class;
@@ -78,7 +80,7 @@ abstract class MetadataFactory
      *
      * @return bool Returns if a class exists.
      */
-    public function hasClass($class)
+    public function hasClass(string $class): bool
     {
         return isset($this->classes[$class]);
     }
@@ -90,9 +92,9 @@ abstract class MetadataFactory
      *
      * @return bool If the class is a document (not embedded).
      *
-     * @throws \LogicException If the class does not exist in the metadata.
+     * @throws LogicException If the class does not exist in the metadata.
      */
-    public function isDocumentClass($class)
+    public function isDocumentClass(string $class): bool
     {
         $this->checkClass($class);
 
@@ -106,9 +108,9 @@ abstract class MetadataFactory
      *
      * @return bool If the class is a embedded document.
      *
-     * @throws \LogicException If the class does not exist in the metadata.
+     * @throws LogicException If the class does not exist in the metadata.
      */
-    public function isEmbeddedDocumentClass($class)
+    public function isEmbeddedDocumentClass(string $class): bool
     {
         $this->checkClass($class);
 
@@ -122,9 +124,9 @@ abstract class MetadataFactory
      *
      * @return array The metadata of the class.
      *
-     * @throws \LogicException If the class does not exist in the metadata factory.
+     * @throws LogicException If the class does not exist in the metadata factory.
      */
-    public function getClass($class)
+    public function getClass(string $class): array
     {
         $this->checkClass($class);
 
@@ -136,10 +138,10 @@ abstract class MetadataFactory
         return $this->infoClass->{'get'.str_replace('\\', '', $class).'Class'}();
     }
 
-    protected function checkClass($class)
+    protected function checkClass($class): void
     {
         if (!$this->hasClass($class)) {
-            throw new \LogicException(sprintf('The class "%s" does not exist in the metadata factory.', $class));
+            throw new LogicException(sprintf('The class "%s" does not exist in the metadata factory.', $class));
         }
     }
 }

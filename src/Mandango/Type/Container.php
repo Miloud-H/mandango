@@ -11,6 +11,10 @@
 
 namespace Mandango\Type;
 
+use InvalidArgumentException;
+use ReflectionClass;
+use ReflectionException;
+
 /**
  * Container of types.
  *
@@ -20,20 +24,18 @@ namespace Mandango\Type;
  */
 class Container
 {
-    static private $map = array(
-        'bin_data'       => 'Mandango\Type\BinDataType',
-        'boolean'        => 'Mandango\Type\BooleanType',
-        'date'           => 'Mandango\Type\DateType',
-        'float'          => 'Mandango\Type\FloatType',
-        'integer'        => 'Mandango\Type\IntegerType',
-        'raw'            => 'Mandango\Type\RawType',
-        'referenceOne'  => 'Mandango\Type\ReferenceOneType',
-        'referenceMany' => 'Mandango\Type\ReferenceManyType',
-        'serialized'     => 'Mandango\Type\SerializedType',
-        'string'         => 'Mandango\Type\StringType',
-    );
+    static private array $map = [
+        'bin_data'       => BinDataType::class,
+        'boolean'        => BooleanType::class,
+        'date'           => DateType::class,
+        'float'          => FloatType::class,
+        'integer'        => IntegerType::class,
+        'raw'            => RawType::class,
+        'serialized'     => SerializedType::class,
+        'string'         => StringType::class,
+    ];
 
-    static private $types = array();
+    static private array $types = [];
 
     /**
      * Returns if exists a type by name.
@@ -44,7 +46,7 @@ class Container
      *
      * @api
      */
-    static public function has($name)
+    static public function has(string $name): bool
     {
         return isset(static::$map[$name]);
     }
@@ -52,23 +54,21 @@ class Container
     /**
      * Add a type.
      *
-     * @param string $name  The type name.
+     * @param string $name The type name.
      * @param string $class The type class.
      *
-     * @throws \InvalidArgumentException If the type already exists.
-     * @throws \InvalidArgumentException If the class is not a subclass of Mandango\Type\Type.
-     *
+     * @throws ReflectionException
      * @api
      */
-    static public function add($name, $class)
+    static public function add(string $name, string $class): void
     {
         if (static::has($name)) {
-            throw new \InvalidArgumentException(sprintf('The type "%s" already exists.', $name));
+            throw new InvalidArgumentException(sprintf('The type "%s" already exists.', $name));
         }
 
-        $r = new \ReflectionClass($class);
+        $r = new ReflectionClass($class);
         if (!$r->isSubclassOf('Mandango\Type\Type')) {
-            throw new \InvalidArgumentException(sprintf('The class "%s" is not a subclass of Mandango\Type\Type.', $class));
+            throw new InvalidArgumentException(sprintf('The class "%s" is not a subclass of Mandango\Type\Type.', $class));
         }
 
         static::$map[$name] = $class;
@@ -79,17 +79,17 @@ class Container
      *
      * @param string $name The type name.
      *
-     * @return \Mandango\Type\Type The type.
+     * @return Type The type.
      *
-     * @throws \InvalidArgumentException If the type does not exists.
+     * @throws InvalidArgumentException If the type does not exists.
      *
      * @api
      */
-    static public function get($name)
+    static public function get(string $name): Type
     {
         if (!isset(static::$types[$name])) {
             if (!static::has($name)) {
-                throw new \InvalidArgumentException(sprintf('The type "%s" does not exists.', $name));
+                throw new InvalidArgumentException(sprintf('The type "%s" does not exists.', $name));
             }
 
             static::$types[$name] = new static::$map[$name];
@@ -103,14 +103,14 @@ class Container
      *
      * @param string $name The type name.
      *
-     * @throws \InvalidArgumentException If the type does not exists.
+     * @throws InvalidArgumentException If the type does not exists.
      *
      * @api
      */
-    static public function remove($name)
+    static public function remove(string $name): void
     {
         if (!static::has($name)) {
-            throw new \InvalidArgumentException(sprintf('The type "%s" does not exists.', $name));
+            throw new InvalidArgumentException(sprintf('The type "%s" does not exists.', $name));
         }
 
         unset(static::$map[$name], static::$types[$name]);
@@ -121,21 +121,19 @@ class Container
      *
      * @api
      */
-    static public function reset()
+    static public function reset(): void
     {
-        static::$map = array(
-            'bin_data'       => 'Mandango\Type\BinDataType',
-            'boolean'        => 'Mandango\Type\BooleanType',
-            'date'           => 'Mandango\Type\DateType',
-            'float'          => 'Mandango\Type\FloatType',
-            'integer'        => 'Mandango\Type\IntegerType',
-            'raw'            => 'Mandango\Type\RawType',
-            'referenceOne'  => 'Mandango\Type\ReferenceOneType',
-            'referenceMany' => 'Mandango\Type\ReferenceManyType',
-            'serialized'     => 'Mandango\Type\SerializedType',
-            'string'         => 'Mandango\Type\StringType',
-        );
+        static::$map = [
+            'bin_data'       => BinDataType::class,
+            'boolean'        => BooleanType::class,
+            'date'           => DateType::class,
+            'float'          => FloatType::class,
+            'integer'        => IntegerType::class,
+            'raw'            => RawType::class,
+            'serialized'     => SerializedType::class,
+            'string'         => StringType::class,
+        ];
 
-        static::$types = array();
+        static::$types = [];
     }
 }

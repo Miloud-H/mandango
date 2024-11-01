@@ -12,6 +12,7 @@
 namespace Mandango\Tests;
 
 use Mandango\IdentityMap;
+use MongoId;
 
 class IdentityMapTest extends TestCase
 {
@@ -19,7 +20,7 @@ class IdentityMapTest extends TestCase
     {
         $articles = array();
         for ($i = 1; $i <= 10; $i ++) {
-            $articles[$i] = $this->mandango->create('Model\Article')->setId(new \MongoId($this->generateObjectId()));
+            $articles[$i] = $this->mandango->create('Model\Article')->setId(new MongoId($this->generateObjectId()));
         }
 
         $identityMap = new IdentityMap();

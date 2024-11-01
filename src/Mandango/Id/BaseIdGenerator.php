@@ -11,8 +11,6 @@
 
 namespace Mandango\Id;
 
-use Mandango\Document\Document;
-
 /**
  * BaseIdGenerator.
  *
@@ -27,10 +25,10 @@ abstract class BaseIdGenerator
      *
      * @return string The code to generate.
      */
-    abstract public function getCode(array $options);
+    abstract public function getCode(array $options): string;
 
     /**
      * Returns the code to convert an id to the mongo value.
      */
-    abstract public function getToMongoCode();
+    abstract public function getToMongoCode(): string;
 }

@@ -11,22 +11,24 @@
 
 namespace Mandango\Logger;
 
+use MongoClient;
+
 /**
  * A loggable Mongo.
  *
  * @author Pablo Díez <pablodip@gmail.com>
  */
-class LoggableMongo extends \Mongo
+class LoggableMongo extends MongoClient
 {
     private $loggerCallable;
-    private $logDefault = array();
+    private array $logDefault = [];
 
     /**
      * Set the logger callable.
      *
      * @param mixed $loggerCallable A PHP callable.
      */
-    public function setLoggerCallable($loggerCallable)
+    public function setLoggerCallable($loggerCallable): void
     {
         $this->loggerCallable = $loggerCallable;
     }
@@ -46,7 +48,7 @@ class LoggableMongo extends \Mongo
      *
      * @param array $logDefault The log default.
      */
-    public function setLogDefault(array $logDefault)
+    public function setLogDefault(array $logDefault): void
     {
         $this->logDefault = $logDefault;
     }
@@ -56,7 +58,7 @@ class LoggableMongo extends \Mongo
      *
      * @return array The log default.
      */
-    public function getLogDefault()
+    public function getLogDefault(): array
     {
         return $this->logDefault;
     }
@@ -66,7 +68,7 @@ class LoggableMongo extends \Mongo
      *
      * @param array $log The log value.
      */
-    public function log(array $log)
+    public function log(array $log): void
     {
         if ($this->loggerCallable) {
             call_user_func($this->loggerCallable, array_merge($this->logDefault, $log));
@@ -76,7 +78,7 @@ class LoggableMongo extends \Mongo
     /**
      * selectDB.
      */
-    public function selectDB($name)
+    public function selectDB($name): LoggableMongoDB
     {
         return new LoggableMongoDB($this, $name);
     }

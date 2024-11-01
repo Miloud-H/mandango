@@ -43,7 +43,6 @@ class CoreMetadataTest extends TestCase
 
         // referencesMany
         $this->assertTrue(isset($metadata['referencesMany']['categories']));
-        $this->assertTrue(isset($metadata['referencesMany']['categories']));
         $this->assertTrue($metadata['referencesMany']['categories']['inherited']);
         $this->assertTrue(isset($metadata['referencesMany']['categoriesLocal']));
         $this->assertTrue(isset($metadata['referencesMany']['categoriesLocal']['inherited']));

@@ -11,17 +11,19 @@
 
 namespace Mandango\Logger;
 
+use MongoGridFSCursor;
+
 /**
  * A loggable MongoGridFSCursor.
  *
  * @author Pablo Díez <pablodip@gmail.com>
  */
-class LoggableMongoGridFSCursor extends \MongoGridFSCursor
+class LoggableMongoGridFSCursor extends MongoGridFSCursor
 {
-    private $grid;
+    private LoggableMongoGridFS $grid;
     private $type;
-    private $explainCursor;
-    private $time;
+    private MongoGridFSCursor $explainCursor;
+    private Time $time;
 
     /**
      * Constructor.
@@ -34,7 +36,7 @@ class LoggableMongoGridFSCursor extends \MongoGridFSCursor
         $ns = $grid->getDB()->__toString().'.'.$grid->getName();
 
         $this->type = $type;
-        $this->explainCursor = new \MongoGridFSCursor($grid, $mongo, $ns, $query, $fields);
+        $this->explainCursor = new MongoGridFSCursor($grid, $mongo, $ns, $query, $fields);
         $this->time = new Time();
 
         parent::__construct($grid, $mongo, $ns, $query, $fields);
@@ -83,27 +85,25 @@ class LoggableMongoGridFSCursor extends \MongoGridFSCursor
     /*
      * rewind.
      */
-    public function rewind()
+    public function rewind(): void
     {
         $this->logQuery();
-
-        return parent::rewind();
+        parent::rewind();
     }
 
     /*
      * next.
      */
-    public function next()
+    public function next(): void
     {
         $this->logQuery();
-
-        return parent::next();
+        parent::next();
     }
 
     /*
      * count.
      */
-    public function count($foundOnly = false)
+    public function count($foundOnly = false): int
     {
         $this->time->start();
         $return = parent::count($foundOnly);
@@ -111,14 +111,14 @@ class LoggableMongoGridFSCursor extends \MongoGridFSCursor
 
         $info = $this->info();
 
-        $this->log(array(
+        $this->log([
             'type'      => 'count',
-            'query'     => is_array($info['query']) ? $info['query'] : array(),
+            'query'     => is_array($info['query']) ? $info['query'] : [],
             'limit'     => $info['limit'],
             'skip'      => $info['skip'],
             'foundOnly' => $foundOnly,
             'time'      => $time,
-        ));
+        ]);
 
         return $return;
     }
@@ -126,7 +126,7 @@ class LoggableMongoGridFSCursor extends \MongoGridFSCursor
     /*
      * log the query.
      */
-    protected function logQuery()
+    protected function logQuery(): void
     {
         $info = $this->info();
 
@@ -158,7 +158,7 @@ class LoggableMongoGridFSCursor extends \MongoGridFSCursor
             // log
             $log = array(
                 'type'   => $this->type,
-                'query'  => isset($info['query']['$query']) && is_array($info['query']['$query']) ? $info['query']['$query'] : array(),
+                'query'  => isset($info['query']['$query']) && is_array($info['query']['$query']) ? $info['query']['$query'] : [],
                 'fields' => $info['fields'],
             );
             if (isset($info['query']['$orderby'])) {
@@ -179,12 +179,12 @@ class LoggableMongoGridFSCursor extends \MongoGridFSCursor
             if (isset($info['query']['$snapshot'])) {
                 $log['snapshot'] = 1;
             }
-            $log['explain'] = array(
+            $log['explain'] = [
                 'nscanned'        => $explain['nscanned'],
                 'nscannedObjects' => $explain['nscannedObjects'],
                 'n'               => $explain['n'],
                 'indexBounds'     => $explain['indexBounds'],
-            );
+            ];
             $log['time'] = $explain['millis'];
 
             $this->log($log);

@@ -26,12 +26,12 @@ abstract class EmbeddedDocument extends AbstractDocument
     /**
      * Set the root and path of the embedded document.
      *
-     * @param \Mandango\Document\Document $root The root document.
-     * @param string                      $path The path.
+     * @param Document $root The root document.
+     * @param string $path The path.
      *
      * @api
      */
-    public function setRootAndPath(Document $root, $path)
+    public function setRootAndPath(Document $root, string $path): void
     {
         Archive::set($this, 'root_and_path', array('root' => $root, 'path' => $path));
 
@@ -55,7 +55,7 @@ abstract class EmbeddedDocument extends AbstractDocument
      *
      * @api
      */
-    public function getRootAndPath()
+    public function getRootAndPath(): array
     {
         return Archive::getOrDefault($this, 'root_and_path', null);
     }
@@ -65,7 +65,7 @@ abstract class EmbeddedDocument extends AbstractDocument
      *
      * @return bool If the document is an embedded one document changed.
      */
-    public function isEmbeddedOneChangedInParent()
+    public function isEmbeddedOneChangedInParent(): bool
     {
         if (!$rap = $this->getRootAndPath()) {
             return false;
@@ -98,12 +98,12 @@ abstract class EmbeddedDocument extends AbstractDocument
      *
      * @return bool Whether the embedded document is an embedded many new.
      */
-    public function isEmbeddedManyNew()
+    public function isEmbeddedManyNew(): bool
     {
         if (!$rap = $this->getRootAndPath()) {
             return false;
         }
 
-        return false !== strpos($rap['path'], '._add');
+        return str_contains($rap['path'], '._add');
     }
 }

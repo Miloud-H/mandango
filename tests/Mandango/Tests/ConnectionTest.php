@@ -11,7 +11,9 @@
 
 namespace Mandango\Tests;
 
+use Exception;
 use Mandango\Connection;
+use RuntimeException;
 
 class ConnectionTest extends TestCase
 {
@@ -49,7 +51,7 @@ class ConnectionTest extends TestCase
         try {
             $connection->setServer($this->server);
             $this->fail();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->assertInstanceOf('LogicException', $e);
         }
     }
@@ -64,7 +66,7 @@ class ConnectionTest extends TestCase
         try {
             $connection->setDbName($this->dbName);
             $this->fail();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->assertInstanceOf('LogicException', $e);
         }
     }
@@ -79,7 +81,7 @@ class ConnectionTest extends TestCase
         try {
             $connection->setOptions(array());
             $this->fail();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->assertInstanceOf('LogicException', $e);
         }
     }
@@ -93,14 +95,14 @@ class ConnectionTest extends TestCase
     }
 
     /**
-     * @expectedException \RuntimeException
+     * @expectedException RuntimeException
      */
     public function testSetLoggerCallableWhenTheConnectionHasAlreadyTheMongo()
     {
         $connection = new Connection($this->server, $this->dbName);
         $connection->getMongo();
 
-        $connection->setLoggerCallable($loggerCallable = array($this, 'log'));
+        $connection->setLoggerCallable([$this, 'log']);
     }
 
     public function testLogDefault()
@@ -112,14 +114,14 @@ class ConnectionTest extends TestCase
     }
 
     /**
-     * @expectedException \RuntimeException
+     * @expectedException RuntimeException
      */
     public function testSetLogDefaultWhenTheConnectionHasAlreadyTheMongo()
     {
         $connection = new Connection($this->server, $this->dbName);
         $connection->getMongo();
 
-        $connection->setLogDefault($logDefault = array('foo' => 'bar'));
+        $connection->setLogDefault(['foo' => 'bar']);
     }
 
     public function testMandangoLoggerWithLoggerCallable()

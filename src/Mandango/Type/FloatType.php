@@ -39,7 +39,7 @@ class FloatType extends Type
     /**
      * {@inheritdoc}
      */
-    public function toMongoInString()
+    public function toMongoInString(): string
     {
         return '%to% = (float) %from%;';
     }
@@ -47,7 +47,7 @@ class FloatType extends Type
     /**
      * {@inheritdoc}
      */
-    public function toPHPInString()
+    public function toPHPInString(): string
     {
         return '%to% = (float) %from%;';
     }

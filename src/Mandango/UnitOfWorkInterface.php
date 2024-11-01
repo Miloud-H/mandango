@@ -11,6 +11,8 @@
 
 namespace Mandango;
 
+use Mandango\Document\Document;
+
 /**
  * UnitOfWorkInterface.
  *
@@ -23,20 +25,20 @@ interface UnitOfWorkInterface
     /**
      * Persist a document.
      *
-     * @param \Mandango\Document\Document|array $documents A document or an array of documents.
+     * @param array|Document $documents A document or an array of documents.
      *
      * @api
      */
-    function persist($documents);
+    function persist(array|Document $documents);
 
     /**
      * Remove a document.
      *
-     * @param \Mandango\Document\Document|array $documents A document or an array of documents.
+     * @param array|Document $documents A document or an array of documents.
      *
      * @api
      */
-    function remove($documents);
+    function remove(array|Document $documents);
 
     /**
      * Commit pending persist and remove operations.

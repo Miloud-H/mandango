@@ -11,7 +11,13 @@
 
 namespace Mandango;
 
-use Mandango\Repository;
+use ArrayIterator;
+use Countable;
+use InvalidArgumentException;
+use IteratorAggregate;
+use Mandango\Document\Document;
+use MongoCursor;
+use Traversable;
 
 /**
  * Query.
@@ -20,27 +26,27 @@ use Mandango\Repository;
  *
  * @api
  */
-abstract class Query implements \Countable, \IteratorAggregate
+abstract class Query implements Countable, IteratorAggregate
 {
-    private $repository;
-    private $hash;
+    private Repository $repository;
+    private string $hash;
 
-    private $criteria;
-    private $fields;
-    private $references;
-    private $sort;
-    private $limit;
-    private $skip;
-    private $batchSize;
-    private $hint;
-    private $slaveOkay;
-    private $snapshot;
-    private $timeout;
+    private array $criteria;
+    private array $fields;
+    private array $references;
+    private array $sort;
+    private ?int $limit;
+    private ?int $skip;
+    private ?int $batchSize;
+    private ?array $hint;
+    private ?bool $slaveOkay;
+    private false $snapshot;
+    private ?int $timeout;
 
     /**
      * Constructor.
      *
-     * @param \Mandango\Repository $repository The repository of the document class to query.
+     * @param Repository $repository The repository of the document class to query.
      *
      * @api
      */
@@ -50,7 +56,7 @@ abstract class Query implements \Countable, \IteratorAggregate
 
         $hash = $this->repository->getDocumentClass();
 
-        if (version_compare(PHP_VERSION, '5.3.6', '=>')) {
+        if (version_compare(PHP_VERSION, '5.3.6', '>=')) {
             $debugBacktrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
         } else {
             $debugBacktrace = debug_backtrace();
@@ -90,11 +96,11 @@ abstract class Query implements \Countable, \IteratorAggregate
     /**
      * Returns the repository.
      *
-     * @return \Mandango\Repository The repository.
+     * @return Repository The repository.
      *
      * @api
      */
-    public function getRepository()
+    public function getRepository(): Repository
     {
         return $this->repository;
     }
@@ -104,7 +110,7 @@ abstract class Query implements \Countable, \IteratorAggregate
      *
      * @return string The query hash.
      */
-    public function getHash()
+    public function getHash(): string
     {
         return $this->hash;
     }
@@ -114,7 +120,7 @@ abstract class Query implements \Countable, \IteratorAggregate
      *
      * @return array|null The fields in cache, or null if there is not.
      */
-    public function getFieldsCache()
+    public function getFieldsCache(): ?array
     {
         $cache = $this->repository->getMandango()->getCache()->get($this->hash);
 
@@ -126,7 +132,7 @@ abstract class Query implements \Countable, \IteratorAggregate
      *
      * @return array|null The references in cache, or null if there is not.
      */
-    public function getReferencesCache()
+    public function getReferencesCache(): ?array
     {
         $cache = $this->repository->getMandango()->getCache()->get($this->hash);
 
@@ -138,11 +144,11 @@ abstract class Query implements \Countable, \IteratorAggregate
      *
      * @param array $criteria The criteria.
      *
-     * @return \Mandango\Query The query instance (fluent interface).
+     * @return Query The query instance (fluent interface).
      *
      * @api
      */
-    public function criteria(array $criteria)
+    public function criteria(array $criteria): static
     {
         $this->criteria = $criteria;
 
@@ -154,13 +160,13 @@ abstract class Query implements \Countable, \IteratorAggregate
      *
      * @param array $criteria The criteria.
      *
-     * @return \Mandango\Query The query instance (fluent interface).
+     * @return Query The query instance (fluent interface).
      *
      * @api
      */
-    public function mergeCriteria(array $criteria)
+    public function mergeCriteria(array $criteria): self
     {
-        $this->criteria = null === $this->criteria ? $criteria : array_merge($this->criteria, $criteria);
+        $this->criteria = array_merge($this->criteria, $criteria);
 
         return $this;
     }
@@ -172,7 +178,7 @@ abstract class Query implements \Countable, \IteratorAggregate
      *
      * @api
      */
-    public function getCriteria()
+    public function getCriteria(): array
     {
         return $this->criteria;
     }
@@ -182,11 +188,11 @@ abstract class Query implements \Countable, \IteratorAggregate
      *
      * @param array $fields The fields.
      *
-     * @return \Mandango\Query The query instance (fluent interface).
+     * @return Query The query instance (fluent interface).
      *
      * @api
      */
-    public function fields($fields)
+    public function fields(array $fields): self
     {
         $this->fields = $fields;
 
@@ -200,7 +206,7 @@ abstract class Query implements \Countable, \IteratorAggregate
      *
      * @api
      */
-    public function getFields()
+    public function getFields(): array
     {
         return $this->fields;
     }
@@ -210,16 +216,16 @@ abstract class Query implements \Countable, \IteratorAggregate
      *
      * @param array $references The references.
      *
-     * @return \Mandango\Query The query instance (fluent interface).
+     * @return Query The query instance (fluent interface).
      *
-     * @throws \InvalidArgumentException If the references are not an array or null.
+     * @throws InvalidArgumentException If the references are not an array or null.
      *
      * @api
      */
-    public function references($references)
+    public function references(?array $references): self
     {
         if (null !== $references && !is_array($references)) {
-            throw new \InvalidArgumentException(sprintf('The references "%s" are not valid.', $references));
+            throw new InvalidArgumentException(sprintf('The references "%s" are not valid.', $references));
         }
 
         $this->references = $references;
@@ -234,7 +240,7 @@ abstract class Query implements \Countable, \IteratorAggregate
      *
      * @api
      */
-    public function getReferences()
+    public function getReferences(): array
     {
         return $this->references;
     }
@@ -244,16 +250,16 @@ abstract class Query implements \Countable, \IteratorAggregate
      *
      * @param array|null $sort The sort.
      *
-     * @return \Mandango\Query The query instance (fluent interface).
+     * @return Query The query instance (fluent interface).
      *
-     * @throws \InvalidArgumentException If the sort is not an array or null.
+     * @throws InvalidArgumentException If the sort is not an array or null.
      *
      * @api
      */
-    public function sort($sort)
+    public function sort(?array $sort): self
     {
         if (null !== $sort && !is_array($sort)) {
-            throw new \InvalidArgumentException(sprintf('The sort "%s" is not valid.', $sort));
+            throw new InvalidArgumentException(sprintf('The sort "%s" is not valid.', $sort));
         }
 
         $this->sort = $sort;
@@ -268,7 +274,7 @@ abstract class Query implements \Countable, \IteratorAggregate
      *
      * @api
      */
-    public function getSort()
+    public function getSort(): array
     {
         return $this->sort;
     }
@@ -278,17 +284,17 @@ abstract class Query implements \Countable, \IteratorAggregate
      *
      * @param int|null $limit The limit.
      *
-     * @return \Mandango\Query The query instance (fluent interface).
+     * @return Query The query instance (fluent interface).
      *
-     * @throws \InvalidArgumentException If the limit is not a valid integer or null.
+     * @throws InvalidArgumentException If the limit is not a valid integer or null.
      *
      * @api
      */
-    public function limit($limit)
+    public function limit(?int $limit): self
     {
         if (null !== $limit) {
             if (!is_numeric($limit) || $limit != (int) $limit) {
-                throw new \InvalidArgumentException('The limit is not valid.');
+                throw new InvalidArgumentException('The limit is not valid.');
             }
             $limit = (int) $limit;
         }
@@ -305,7 +311,7 @@ abstract class Query implements \Countable, \IteratorAggregate
      *
      * @api
      */
-    public function getLimit()
+    public function getLimit(): ?int
     {
         return $this->limit;
     }
@@ -315,17 +321,17 @@ abstract class Query implements \Countable, \IteratorAggregate
      *
      * @param int|null $skip The skip.
      *
-     * @return \Mandango\Query The query instance (fluent interface).
+     * @return Query The query instance (fluent interface).
      *
-     * @throws \InvalidArgumentException If the skip is not a valid integer, or null.
+     * @throws InvalidArgumentException If the skip is not a valid integer, or null.
      *
      * @api
      */
-    public function skip($skip)
+    public function skip(?int $skip): self
     {
         if (null !== $skip) {
             if (!is_numeric($skip) || $skip != (int) $skip) {
-                throw new \InvalidArgumentException('The skip is not valid.');
+                throw new InvalidArgumentException('The skip is not valid.');
             }
             $skip = (int) $skip;
         }
@@ -342,7 +348,7 @@ abstract class Query implements \Countable, \IteratorAggregate
      *
      * @api
      */
-    public function getSkip()
+    public function getSkip(): ?int
     {
         return $this->skip;
     }
@@ -352,15 +358,15 @@ abstract class Query implements \Countable, \IteratorAggregate
      *
      * @param int|null $batchSize The batch size.
      *
-     * @return \Mandango\Query The query instance (fluent interface).
+     * @return Query The query instance (fluent interface).
      *
      * @api
      */
-    public function batchSize($batchSize)
+    public function batchSize(?int $batchSize): self
     {
         if (null !== $batchSize) {
             if (!is_numeric($batchSize) || $batchSize != (int) $batchSize) {
-                throw new \InvalidArgumentException('The batchSize is not valid.');
+                throw new InvalidArgumentException('The batchSize is not valid.');
             }
             $batchSize = (int) $batchSize;
         }
@@ -377,7 +383,7 @@ abstract class Query implements \Countable, \IteratorAggregate
      *
      * @api
      */
-    public function getBatchSize()
+    public function getBatchSize(): ?int
     {
         return $this->batchSize;
     }
@@ -385,16 +391,16 @@ abstract class Query implements \Countable, \IteratorAggregate
     /**
      * Set the hint.
      *
-     * @param array|null The hint.
+     * @param array|null $hint The hint.
      *
-     * @return \Mandango\Query The query instance (fluent interface).
+     * @return Query The query instance (fluent interface).
      *
      * @api
      */
-    public function hint($hint)
+    public function hint(?array $hint): self
     {
         if (null !== $hint && !is_array($hint)) {
-            throw new \InvalidArgumentException(sprintf('The hint "%s" is not valid.', $hint));
+            throw new InvalidArgumentException(sprintf('The hint "%s" is not valid.', $hint));
         }
 
         $this->hint = $hint;
@@ -409,7 +415,7 @@ abstract class Query implements \Countable, \IteratorAggregate
      *
      * @api
      */
-    public function getHint()
+    public function getHint(): ?array
     {
         return $this->hint;
     }
@@ -419,13 +425,13 @@ abstract class Query implements \Countable, \IteratorAggregate
      *
      * @param Boolean|null $okay If it is okay to query the slave (true by default).
      *
-     * @return \Mandango\Query The query instance (fluent interface).
+     * @return Query The query instance (fluent interface).
      */
-    public function slaveOkay($okay = true)
+    public function slaveOkay(?bool $okay = true): self
     {
         if (null !== $okay) {
             if (!is_bool($okay)) {
-                throw new \InvalidArgumentException('The slave okay is not a boolean.');
+                throw new InvalidArgumentException('The slave okay is not a boolean.');
             }
         }
 
@@ -439,7 +445,7 @@ abstract class Query implements \Countable, \IteratorAggregate
      *
      * @return Boolean|null The slave okay.
      */
-    public function getSlaveOkay()
+    public function getSlaveOkay(): ?bool
     {
         return $this->slaveOkay;
     }
@@ -449,16 +455,12 @@ abstract class Query implements \Countable, \IteratorAggregate
      *
      * @param bool $snapshot If the snapshot mode is used.
      *
-     * @return \Mandango\Query The query instance (fluent interface).
+     * @return Query The query instance (fluent interface).
      *
      * @api
      */
-    public function snapshot($snapshot)
+    public function snapshot(bool $snapshot): self
     {
-        if (!is_bool($snapshot)) {
-            throw new \InvalidArgumentException('The snapshot is not a boolean.');
-        }
-
         $this->snapshot = $snapshot;
 
         return $this;
@@ -471,7 +473,7 @@ abstract class Query implements \Countable, \IteratorAggregate
      *
      * @api
      */
-    public function getSnapshot()
+    public function getSnapshot(): bool
     {
         return $this->snapshot;
     }
@@ -481,15 +483,15 @@ abstract class Query implements \Countable, \IteratorAggregate
      *
      * @param int|null $timeout The timeout of the cursor.
      *
-     * @return \Mandango\Query The query instance (fluent interface).
+     * @return Query The query instance (fluent interface).
      *
      * @api
      */
-    public function timeout($timeout)
+    public function timeout(?int $timeout): self
     {
         if (null !== $timeout) {
             if (!is_numeric($timeout) || $timeout != (int) $timeout) {
-                throw new \InvalidArgumentException('The timeout is not valid.');
+                throw new InvalidArgumentException('The timeout is not valid.');
             }
             $timeout = (int) $timeout;
         }
@@ -506,7 +508,7 @@ abstract class Query implements \Countable, \IteratorAggregate
      *
      * @api
      */
-    public function getTimeout()
+    public function getTimeout(): ?int
     {
         return $this->timeout;
     }
@@ -518,28 +520,28 @@ abstract class Query implements \Countable, \IteratorAggregate
      *
      * @api
      */
-    abstract public function all();
+    abstract public function all(): array;
 
     /**
      * Returns an \ArrayIterator with all results (implements \IteratorAggregate interface).
      *
-     * @return \ArrayIterator An \ArrayIterator with all results.
+     * @return ArrayIterator An \ArrayIterator with all results.
      *
      * @api
      */
-    public function getIterator()
+    public function getIterator(): Traversable
     {
-        return new \ArrayIterator($this->all());
+        return new ArrayIterator($this->all());
     }
 
     /**
      * Returns one result.
      *
-     * @return \Mandango\Document\Document|null A document or null if there is no any result.
+     * @return Document|null A document or null if there is no any result.
      *
      * @api
      */
-    public function one()
+    public function one(): ?Document
     {
         $currentLimit = $this->limit;
         $results = $this->limit(1)->all();
@@ -555,7 +557,7 @@ abstract class Query implements \Countable, \IteratorAggregate
      *
      * @api
      */
-    public function count()
+    public function count(): int
     {
         return $this->createCursor()->count();
     }
@@ -563,15 +565,13 @@ abstract class Query implements \Countable, \IteratorAggregate
     /**
      * Create a cursor with the data of the query.
      *
-     * @return \MongoCursor A cursor with the data of the query.
+     * @return MongoCursor A cursor with the data of the query.
      */
-    public function createCursor()
+    public function createCursor(): MongoCursor
     {
         $cursor = $this->repository->getCollection()->find($this->criteria, $this->fields);
 
-        if (null !== $this->sort) {
-            $cursor->sort($this->sort);
-        }
+        $cursor->sort($this->sort);
 
         if (null !== $this->limit) {
             $cursor->limit($this->limit);

@@ -11,6 +11,9 @@
 
 namespace Mandango\Cache;
 
+use DirectoryIterator;
+use RuntimeException;
+
 /**
  * FilesystemCache.
  *
@@ -18,14 +21,14 @@ namespace Mandango\Cache;
  */
 class FilesystemCache implements CacheInterface
 {
-    private $dir;
+    private string $dir;
 
     /**
      * Constructor.
      *
      * @param string $dir The directory.
      */
-    public function __construct($dir)
+    public function __construct(string $dir)
     {
         $this->dir = $dir;
     }
@@ -33,7 +36,7 @@ class FilesystemCache implements CacheInterface
     /**
      * {@inheritdoc}
      */
-    public function has($key)
+    public function has(string $key): bool
     {
         return file_exists($this->dir.'/'.$key.'.php');
     }
@@ -41,7 +44,7 @@ class FilesystemCache implements CacheInterface
     /**
      * {@inheritdoc}
      */
-    public function get($key)
+    public function get(string $key): mixed
     {
         $file = $this->dir.'/'.$key.'.php';
 
@@ -51,10 +54,10 @@ class FilesystemCache implements CacheInterface
     /**
      * {@inheritdoc}
      */
-    public function set($key, $value)
+    public function set(string $key, mixed $value): void
     {
         if (!is_dir($this->dir) && false === @mkdir($this->dir, 0777, true)) {
-            throw new \RuntimeException(sprintf('Unable to create the "%s" directory.', $this->dir));
+            throw new RuntimeException(sprintf('Unable to create the "%s" directory.', $this->dir));
         }
 
         $file = $this->dir.'/'.$key.'.php';
@@ -66,31 +69,31 @@ return $valueExport;
 EOF;
 
         if (false === @file_put_contents($file, $content, LOCK_EX)) {
-            throw new \RuntimeException(sprintf('Unable to write the "%s" file.', $file));
+            throw new RuntimeException(sprintf('Unable to write the "%s" file.', $file));
         }
     }
 
     /**
      * {@inheritdoc}
      */
-    public function remove($key)
+    public function remove(string $key): void
     {
         $file = $this->dir.'/'.$key.'.php';
         if (file_exists($file) && false === @unlink($file)) {
-            throw new \RuntimeException(sprintf('Unable to remove the "%s" file.', $file));
+            throw new RuntimeException(sprintf('Unable to remove the "%s" file.', $file));
         }
     }
 
     /**
      * {@inheritdoc}
      */
-    public function clear()
+    public function clear(): void
     {
         if (is_dir($this->dir)) {
-            foreach (new \DirectoryIterator($this->dir) as $file) {
+            foreach (new DirectoryIterator($this->dir) as $file) {
                 if ($file->isFile()) {
                     if (false === @unlink($file->getRealPath())) {
-                        throw new \RuntimeException(sprintf('Unable to remove the "%s" file.', $file->getRealPath()));
+                        throw new RuntimeException(sprintf('Unable to remove the "%s" file.', $file->getRealPath()));
                     }
                 }
             }

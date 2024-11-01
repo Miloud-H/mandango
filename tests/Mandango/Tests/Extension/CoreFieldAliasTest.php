@@ -12,6 +12,7 @@
 namespace Mandango\Tests\Extension;
 
 use Mandango\Tests\TestCase;
+use MongoId;
 
 class CoreFieldAliasTest extends TestCase
 {
@@ -103,24 +104,24 @@ class CoreFieldAliasTest extends TestCase
     public function testDocumentQueryForSaveUpdate()
     {
         $article = $this->mandango->create('Model\Article');
-        $article->setDocumentData(array(
-            '_id' => new \MongoId($this->generateObjectId()),
+        $article->setDocumentData([
+            '_id' => new MongoId($this->generateObjectId()),
             'basatos' => '234',
-        ));
+        ]);
 
         $article->setDatabase(345);
-        $this->assertSame(array(
-            '$set' => array(
+        $this->assertSame([
+            '$set' => [
                 'basatos' => '345',
-            ),
-        ), $article->queryForSave());
+            ],
+        ], $article->queryForSave());
 
         $article->setDatabase(null);
-        $this->assertSame(array(
-            '$unset' => array(
+        $this->assertSame([
+            '$unset' => [
                 'basatos' => 1,
-            ),
-        ), $article->queryForSave());
+            ],
+        ], $article->queryForSave());
     }
 
     public function testDocumentQueryForSaveEmbeddedNew()
@@ -138,7 +139,7 @@ class CoreFieldAliasTest extends TestCase
     {
         $article = $this->mandango->create('Model\Article');
         $article->setDocumentData(array(
-            '_id' => new \MongoId($this->generateObjectId()),
+            '_id' => new MongoId($this->generateObjectId()),
             'source' => array(
                 'desde' => '234',
             ),
@@ -146,17 +147,17 @@ class CoreFieldAliasTest extends TestCase
         $source = $article->getSource();
 
         $source->setFrom(345);
-        $this->assertSame(array(
-            '$set' => array(
+        $this->assertSame([
+            '$set' => [
                 'source.desde' => '345',
-            ),
-        ), $article->queryForSave());
+            ],
+        ], $article->queryForSave());
 
         $source->setFrom(null);
-        $this->assertSame(array(
-            '$unset' => array(
+        $this->assertSame([
+            '$unset' => [
                 'source.desde' => 1,
-            ),
-        ), $article->queryForSave());
+            ],
+        ], $article->queryForSave());
     }
 }

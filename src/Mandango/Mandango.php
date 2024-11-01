@@ -11,7 +11,10 @@
 
 namespace Mandango;
 
+use InvalidArgumentException;
 use Mandango\Cache\CacheInterface;
+use Mandango\Document\Document;
+use RuntimeException;
 
 /**
  * Mandango.
@@ -22,21 +25,21 @@ use Mandango\Cache\CacheInterface;
  */
 class Mandango
 {
-    const VERSION = '1.0.0-DEV';
+    const string VERSION = '1.0.0-DEV';
 
-    private $metadataFactory;
-    private $cache;
+    private MetadataFactory $metadataFactory;
+    private CacheInterface $cache;
     private $loggerCallable;
-    private $unitOfWork;
-    private $connections;
-    private $defaultConnectionName;
-    private $repositories;
+    private UnitOfWorkInterface $unitOfWork;
+    private array $connections;
+    private ?string $defaultConnectionName;
+    private array $repositories;
 
     /**
      * Constructor.
      *
-     * @param \Mandango\MetadataFactory      $metadataFactory The metadata factory.
-     * @param \Mandango\Cache\CacheInterface $cache           The cache.
+     * @param MetadataFactory $metadataFactory The metadata factory.
+     * @param CacheInterface $cache           The cache.
      * @param mixed                          $loggerCallable  The logger callable (optional, null by default).
      *
      * @api
@@ -58,7 +61,7 @@ class Mandango
      *
      * @api
      */
-    public function getMetadataFactory()
+    public function getMetadataFactory(): MetadataFactory
     {
         return $this->metadataFactory;
     }
@@ -70,7 +73,7 @@ class Mandango
      *
      * @api
      */
-    public function getCache()
+    public function getCache(): CacheInterface
     {
         return $this->cache;
     }
@@ -94,7 +97,7 @@ class Mandango
      *
      * @api
      */
-    public function getUnitOfWork()
+    public function getUnitOfWork(): UnitOfWorkInterface
     {
         return $this->unitOfWork;
     }
@@ -102,18 +105,18 @@ class Mandango
     /**
      * Set a connection.
      *
-     * @param string              $name       The connection name.
+     * @param string $name       The connection name.
      * @param ConnectionInterface $connection The connection.
      *
      * @api
      */
-    public function setConnection($name, ConnectionInterface $connection)
+    public function setConnection(string $name, ConnectionInterface $connection): void
     {
         if (null !== $this->loggerCallable) {
             $connection->setLoggerCallable($this->loggerCallable);
-            $connection->setLogDefault(array('connection' => $name));
+            $connection->setLogDefault(['connection' => $name]);
         } else {
-            $connection->setLoggerCallable(null);
+            $connection->setLoggerCallable();
         }
 
         $this->connections[$name] = $connection;
@@ -126,9 +129,9 @@ class Mandango
      *
      * @api
      */
-    public function setConnections(array $connections)
+    public function setConnections(array $connections): void
     {
-        $this->connections = array();
+        $this->connections = [];
         foreach ($connections as $name => $connection) {
             $this->setConnection($name, $connection);
         }
@@ -139,14 +142,14 @@ class Mandango
      *
      * @param string $name The connection name.
      *
-     * @throws \InvalidArgumentException If the connection does not exists.
+     * @throws InvalidArgumentException If the connection does not exists.
      *
      * @api
      */
-    public function removeConnection($name)
+    public function removeConnection(string $name): void
     {
         if (!$this->hasConnection($name)) {
-            throw new \InvalidArgumentException(sprintf('The connection "%s" does not exists.', $name));
+            throw new InvalidArgumentException(sprintf('The connection "%s" does not exists.', $name));
         }
 
         unset($this->connections[$name]);
@@ -157,9 +160,9 @@ class Mandango
      *
      * @api
      */
-    public function clearConnections()
+    public function clearConnections(): void
     {
-        $this->connections = array();
+        $this->connections = [];
     }
 
     /**
@@ -171,7 +174,7 @@ class Mandango
      *
      * @api
      */
-    public function hasConnection($name)
+    public function hasConnection(string $name): bool
     {
         return isset($this->connections[$name]);
     }
@@ -183,14 +186,14 @@ class Mandango
      *
      * @return ConnectionInterface The connection.
      *
-     * @throws \InvalidArgumentException If the connection does not exists.
+     * @throws InvalidArgumentException If the connection does not exists.
      *
      * @api
      */
-    public function getConnection($name)
+    public function getConnection(string $name): ConnectionInterface
     {
         if (!$this->hasConnection($name)) {
-            throw new \InvalidArgumentException(sprintf('The connection "%s" does not exist.', $name));
+            throw new InvalidArgumentException(sprintf('The connection "%s" does not exist.', $name));
         }
 
         return $this->connections[$name];
@@ -203,7 +206,7 @@ class Mandango
      *
      * @api
      */
-    public function getConnections()
+    public function getConnections(): array
     {
         return $this->connections;
     }
@@ -215,7 +218,7 @@ class Mandango
      *
      * @api
      */
-    public function setDefaultConnectionName($name)
+    public function setDefaultConnectionName(string $name): void
     {
         $this->defaultConnectionName = $name;
     }
@@ -227,7 +230,7 @@ class Mandango
      *
      * @api
      */
-    public function getDefaultConnectionName()
+    public function getDefaultConnectionName(): string
     {
         return $this->defaultConnectionName;
     }
@@ -235,21 +238,21 @@ class Mandango
     /**
      * Returns the default connection.
      *
-     * @return \Mandango\ConnectionInterface The default connection.
+     * @return ConnectionInterface The default connection.
      *
-     * @throws \RuntimeException If there is not default connection name.
-     * @throws \RuntimeException If the default connection does not exists.
+     * @throws RuntimeException If there is not default connection name.
+     * @throws RuntimeException If the default connection does not exists.
      *
      * @api
      */
-    public function getDefaultConnection()
+    public function getDefaultConnection(): ConnectionInterface
     {
         if (null === $this->defaultConnectionName) {
-            throw new \RuntimeException('There is not default connection name.');
+            throw new RuntimeException('There is not default connection name.');
         }
 
         if (!isset($this->connections[$this->defaultConnectionName])) {
-            throw new \RuntimeException(sprintf('The default connection "%s" does not exists.', $this->defaultConnectionName));
+            throw new RuntimeException(sprintf('The default connection "%s" does not exists.', $this->defaultConnectionName));
         }
 
         return $this->connections[$this->defaultConnectionName];
@@ -264,7 +267,7 @@ class Mandango
      *
      * @api
      */
-    public function getMetadata($documentClass)
+    public function getMetadata(string $documentClass): array
     {
         return $this->metadataFactory->getClass($documentClass);
     }
@@ -275,11 +278,11 @@ class Mandango
      * @param string $documentClass  The document class.
      * @param array  $initializeArgs The args to initialize method of the document (optional).
      *
-     * @return \Mandango\Document\Document The document.
+     * @return Document The document.
      *
      * @api
      */
-    public function create($documentClass, array $initializeArgs = array())
+    public function create(string $documentClass, array $initializeArgs = []): Document
     {
         $document = new $documentClass($this);
         $document->initializeDefaults();
@@ -295,23 +298,23 @@ class Mandango
      *
      * @param string $documentClass The document class.
      *
-     * @return \Mandango\Repository The repository.
+     * @return Repository The repository.
      *
-     * @throws \InvalidArgumentException If the document class is not a valid document class.
-     * @throws \RuntimeException         If the repository class build does not exist.
+     * @throws InvalidArgumentException If the document class is not a valid document class.
+     * @throws RuntimeException         If the repository class build does not exist.
      *
      * @api
      */
-    public function getRepository($documentClass)
+    public function getRepository(string $documentClass): Repository
     {
         if (!isset($this->repositories[$documentClass])) {
             if (!$this->metadataFactory->hasClass($documentClass) || !$this->metadataFactory->isDocumentClass($documentClass)) {
-                throw new \InvalidArgumentException(sprintf('The class "%s" is not a valid document class.', $documentClass));
+                throw new InvalidArgumentException(sprintf('The class "%s" is not a valid document class.', $documentClass));
             }
 
             $repositoryClass = $documentClass.'Repository';
             if (!class_exists($repositoryClass)) {
-                throw new \RuntimeException(sprintf('The class "%s" does not exists.', $repositoryClass));
+                throw new RuntimeException(sprintf('The class "%s" does not exists.', $repositoryClass));
             }
 
             $this->repositories[$documentClass] = new $repositoryClass($this);
@@ -327,7 +330,7 @@ class Mandango
      *
      * @api
      */
-    public function getAllRepositories()
+    public function getAllRepositories(): array
     {
         foreach ($this->metadataFactory->getDocumentClasses() as $class) {
             $this->getRepository($class);
@@ -341,7 +344,7 @@ class Mandango
      *
      * @api
      */
-    public function ensureAllIndexes()
+    public function ensureAllIndexes(): void
     {
         foreach ($this->getAllRepositories() as $repository) {
             $repository->ensureIndexes();
@@ -351,7 +354,7 @@ class Mandango
     /**
      * Fixes all the missing references.
      */
-    public function fixAllMissingReferences($documentsPerBatch = 1000)
+    public function fixAllMissingReferences($documentsPerBatch = 1000): void
     {
         foreach ($this->getAllRepositories() as $repository) {
             $repository->fixMissingReferences($documentsPerBatch);
@@ -365,7 +368,7 @@ class Mandango
      *
      * @api
      */
-    public function persist($documents)
+    public function persist($documents): void
     {
         $this->unitOfWork->persist($documents);
     }
@@ -373,11 +376,11 @@ class Mandango
     /**
      * Access to UnitOfWork ->remove() method.
      *
-     * @see Mandango\UnitOfWork::remove()
+     * @see UnitOfWork::remove()
      *
      * @api
      */
-    public function remove($document)
+    public function remove($document): void
     {
         $this->unitOfWork->remove($document);
     }
@@ -385,11 +388,11 @@ class Mandango
     /**
      * Access to UnitOfWork ->commit() method.
      *
-     * @see Mandango\UnitOfWork::commit()
+     * @see UnitOfWork::commit()
      *
      * @api
      */
-    public function flush()
+    public function flush(): void
     {
         $this->unitOfWork->commit();
     }

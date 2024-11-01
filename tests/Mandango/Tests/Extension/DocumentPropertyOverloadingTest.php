@@ -11,6 +11,7 @@
 
 namespace Mandango\Tests\Extension;
 
+use InvalidArgumentException;
 use Mandango\Tests\TestCase;
 
 class DocumentPropertyOverloadingTest extends TestCase
@@ -23,7 +24,7 @@ class DocumentPropertyOverloadingTest extends TestCase
     }
 
     /**
-     * @expectedException \InvalidArgumentException
+     * @expectedException InvalidArgumentException
      */
     public function test__setNameNotExists()
     {
@@ -39,7 +40,7 @@ class DocumentPropertyOverloadingTest extends TestCase
     }
 
     /**
-     * @expectedException \InvalidArgumentException
+     * @expectedException InvalidArgumentException
      */
     public function test__getNameNotExists()
     {

@@ -41,7 +41,7 @@ interface IdentityMapInterface
      *
      * @api
      */
-    function has($id);
+    function has($id): bool;
 
     /**
      * Returns a document.
@@ -52,7 +52,7 @@ interface IdentityMapInterface
      *
      * @api
      */
-    function get($id);
+    function get($id): Document;
 
     /**
      * Returns all documents.
@@ -61,7 +61,7 @@ interface IdentityMapInterface
      *
      * @api
      */
-    function all();
+    function all(): array;
 
     /**
      * Returns all the documents by reference.
@@ -70,7 +70,7 @@ interface IdentityMapInterface
      *
      * @api
      */
-    function &allByReference();
+    function &allByReference(): array;
 
     /**
      * Remove a document.

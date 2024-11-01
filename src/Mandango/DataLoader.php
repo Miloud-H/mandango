@@ -11,6 +11,8 @@
 
 namespace Mandango;
 
+use RuntimeException;
+
 /**
  * Class to load data from an array..
  *
@@ -18,12 +20,12 @@ namespace Mandango;
  */
 class DataLoader
 {
-    private $mandango;
+    private Mandango $mandango;
 
     /**
      * Constructor.
      *
-     * @param \Mandango\Mandango $mandango The mandango.
+     * @param Mandango $mandango The mandango.
      */
     public function __construct(Mandango $mandango)
     {
@@ -33,9 +35,9 @@ class DataLoader
     /**
      * Set the mandango.
      *
-     * @param \Mandango\Mandango $mandango The mandango.
+     * @param Mandango $mandango The mandango.
      */
-    public function setMandango(Mandango $mandango)
+    public function setMandango(Mandango $mandango): void
     {
         $this->mandango = $mandango;
     }
@@ -43,9 +45,9 @@ class DataLoader
     /**
      * Returns the Mandango.
      *
-     * @return \Mandango\Mandango The Mandango.
+     * @return Mandango The Mandango.
      */
-    public function getMandango()
+    public function getMandango(): Mandango
     {
         return $this->mandango;
     }
@@ -54,15 +56,15 @@ class DataLoader
      * Load data.
      *
      * @param array $data  The data to load.
-     * @param bool  $purge If purge the databases before load the data.
+     * @param bool $purge If purge the databases before load the data.
      *
-     * @throws \RuntimeException If the mandango's UnitOfWork has pending operations.
+     * @throws RuntimeException If the mandango's UnitOfWork has pending operations.
      */
-    public function load(array $data, $purge = false)
+    public function load(array $data, bool $purge = false): void
     {
         // has pending
         if ($this->mandango->getUnitOfWork()->hasPending()) {
-            throw new \RuntimeException('The mandango\'s Unit of Work has pending operations.');
+            throw new RuntimeException('The mandango\'s Unit of Work has pending operations.');
         }
 
         // purge
@@ -74,15 +76,15 @@ class DataLoader
 
         // vars
         $mandango = $this->mandango;
-        $documents = array();
+        $documents = [];
 
-        $maps = array();
+        $maps = [];
         foreach ($data as $class => $datum) {
             $maps[$class] = $mandango->getRepository($class)->getMetadata();
         }
 
-        $referencesOne = array();
-        $referencesMany = array();
+        $referencesOne = [];
+        $referencesMany = [];
         foreach ($maps as $class => $metadata) {
             $referencesOne[$class] = $metadata['referencesOne'];
             $referencesMany[$class] = $metadata['referencesMany'];
@@ -98,14 +100,14 @@ class DataLoader
 
         // process function
         $process = function ($class, $key) use (&$process, $mandango, &$data, &$documents, &$maps, &$referencesOne, &$referencesMany) {
-            static $processed = array();
+            static $processed = [];
 
             if (isset($processed[$class][$key])) {
                 return;
             }
 
             if (!isset($data[$class][$key])) {
-                throw new \RuntimeException(sprintf('The document "%s" of the class "%s" does not exist.', $key, $class));
+                throw new RuntimeException(sprintf('The document "%s" of the class "%s" does not exist.', $key, $class));
             }
             $datum = $data[$class][$key];
 
@@ -120,7 +122,7 @@ class DataLoader
                 $process($reference['class'], $datum[$name]);
 
                 if (!isset($documents[$reference['class']][$datum[$name]])) {
-                    throw new \RuntimeException(sprintf('The reference "%s" (%s) for the class "%s" does not exists.', $datum[$name], $name, $class));
+                    throw new RuntimeException(sprintf('The reference "%s" (%s) for the class "%s" does not exists.', $datum[$name], $name, $class));
                 }
                 $document->set($name, $documents[$reference['class']][$datum[$name]]);
                 unset($datum[$name]);
@@ -137,7 +139,7 @@ class DataLoader
                     $process($reference['class'], $value);
 
                     if (!isset($documents[$reference['class']][$value])) {
-                        throw new \RuntimeException(sprintf('The reference "%s" (%s) for the class "%s" does not exists.', $value, $name, $class));
+                        throw new RuntimeException(sprintf('The reference "%s" (%s) for the class "%s" does not exists.', $value, $name, $class));
                     }
                     $refs[] = $documents[$reference['class']][$value];
                 }

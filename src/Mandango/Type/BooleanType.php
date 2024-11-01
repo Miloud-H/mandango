@@ -39,7 +39,7 @@ class BooleanType extends Type
     /**
      * {@inheritdoc}
      */
-    public function toMongoInString()
+    public function toMongoInString(): string
     {
         return '%to% = (bool) %from%;';
     }
@@ -47,7 +47,7 @@ class BooleanType extends Type
     /**
      * {@inheritdoc}
      */
-    public function toPHPInString()
+    public function toPHPInString(): string
     {
         return '%to% = (bool) %from%;';
     }

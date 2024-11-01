@@ -11,6 +11,9 @@
 
 namespace Mandango\Id;
 
+use InvalidArgumentException;
+use ReflectionClass;
+
 /**
  * Container of id generators.
  *
@@ -18,13 +21,13 @@ namespace Mandango\Id;
  */
 class IdGeneratorContainer
 {
-    static private $map = array(
-        'none'     => 'Mandango\Id\NoneIdGenerator',
-        'native'   => 'Mandango\Id\NativeIdGenerator',
-        'sequence' => 'Mandango\Id\SequenceIdGenerator',
-    );
+    static private array $map = [
+        'none'     => NoneIdGenerator::class,
+        'native'   => NativeIdGenerator::class,
+        'sequence' => SequenceIdGenerator::class,
+    ];
 
-    static private $idGenerators = array();
+    static private array $idGenerators = [];
 
     /**
      * Returns whether or not an id generator exists.
@@ -33,7 +36,7 @@ class IdGeneratorContainer
      *
      * @return Boolean Whether or not the id generator exists.
      */
-    static public function has($name)
+    static public function has(string $name): bool
     {
         return isset(static::$map[$name]);
     }
@@ -44,18 +47,18 @@ class IdGeneratorContainer
      * @param string $name  The name.
      * @param string $class The class.
      *
-     * @throws \InvalidArgumentException If the id generator already exists.
-     * @throws \InvalidArgumentException If the class is not a subclass of Mandango\Id\IdGenerator.
+     * @throws InvalidArgumentException If the id generator already exists.
+     * @throws InvalidArgumentException If the class is not a subclass of Mandango\Id\IdGenerator.
      */
-    static public function add($name, $class)
+    static public function add(string $name, string $class): void
     {
         if (static::has($name)) {
-            throw new \InvalidArgumentException(sprintf('The id generator "%s" already exists.', $name));
+            throw new InvalidArgumentException(sprintf('The id generator "%s" already exists.', $name));
         }
 
-        $r = new \ReflectionClass($class);
+        $r = new ReflectionClass($class);
         if (!$r->isSubclassOf('Mandango\Id\BaseIdGenerator')) {
-            throw new \InvalidArgumentException(sprintf('The class "%s" is not a subclass of Mandango\Id\BaseIdGenerator.', $class));
+            throw new InvalidArgumentException(sprintf('The class "%s" is not a subclass of Mandango\Id\BaseIdGenerator.', $class));
         }
 
         static::$map[$name] = $class;
@@ -66,15 +69,15 @@ class IdGeneratorContainer
      *
      * @param string $name The name.
      *
-     * @return \Mandango\Id\BaseIdGenerator The id generator.
+     * @return BaseIdGenerator The id generator.
      *
-     * @throws \InvalidArgumentException If the id generator does not exists.
+     * @throws InvalidArgumentException If the id generator does not exists.
      */
-    static public function get($name)
+    static public function get(string $name): BaseIdGenerator
     {
         if (!isset(static::$idGenerators[$name])) {
             if (!static::has($name)) {
-                throw new \InvalidArgumentException(sprintf('The id generator "%s" does not exists.', $name));
+                throw new InvalidArgumentException(sprintf('The id generator "%s" does not exists.', $name));
             }
 
             static::$idGenerators[$name] = new static::$map[$name];
@@ -88,12 +91,12 @@ class IdGeneratorContainer
      *
      * @param string $name The name.
      *
-     * @throws \InvalidArgumentException If the id generator does not exists.
+     * @throws InvalidArgumentException If the id generator does not exists.
      */
-    static public function remove($name)
+    static public function remove(string $name): void
     {
         if (!static::has($name)) {
-            throw new \InvalidArgumentException(sprintf('The id generator "%s" does not exists.', $name));
+            throw new InvalidArgumentException(sprintf('The id generator "%s" does not exists.', $name));
         }
 
         unset(static::$map[$name], static::$idGenerators[$name]);
@@ -102,14 +105,14 @@ class IdGeneratorContainer
     /**
      * Reset the id generators.
      */
-    static public function reset()
+    static public function reset(): void
     {
-        static::$map = array(
-            'none'     => 'Mandango\Id\NoneIdGenerator',
-            'native'   => 'Mandango\Id\NativeIdGenerator',
-            'sequence' => 'Mandango\Id\SequenceIdGenerator',
-        );
+        static::$map = [
+            'none'     => NoneIdGenerator::class,
+            'native'   => NativeIdGenerator::class,
+            'sequence' => SequenceIdGenerator::class,
+        ];
 
-        static::$idGenerators = array();
+        static::$idGenerators = [];
     }
 }

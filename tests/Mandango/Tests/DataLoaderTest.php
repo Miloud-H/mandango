@@ -13,6 +13,7 @@ namespace Mandango\Tests;
 
 use Mandango\DataLoader;
 use Mandango\Mandango;
+use RuntimeException;
 
 class DataLoaderTest extends TestCase
 {
@@ -31,47 +32,47 @@ class DataLoaderTest extends TestCase
 
     public function testLoad()
     {
-        $data = array(
-            'Model\Article' => array(
-                'article_1' => array(
+        $data = [
+            'Model\Article' => [
+                'article_1' => [
                     'title'   => 'Article 1',
                     'content' => 'Contuent',
                     'author'  => 'sormes',
-                    'categories' => array(
+                    'categories' => [
                         'category_2',
                         'category_3',
-                    ),
-                ),
-                'article_2' => array(
+                    ],
+                ],
+                'article_2' => [
                     'title' => 'My Article 2',
-                ),
-            ),
-            'Model\Author' => array(
-                'pablodip' => array(
+                ],
+            ],
+            'Model\Author' => [
+                'pablodip' => [
                     'name' => 'PabloDip',
-                ),
-                'sormes' => array(
+                ],
+                'sormes' => [
                     'name' => 'Francisco',
-                ),
-                'barbelith' => array(
+                ],
+                'barbelith' => [
                     'name' => 'Pedro',
-                ),
-            ),
-            'Model\Category' => array(
-                'category_1' => array(
+                ],
+            ],
+            'Model\Category' => [
+                'category_1' => [
                     'name' => 'Category1',
-                ),
-                'category_2' => array(
+                ],
+                'category_2' => [
                     'name' => 'Category2',
-                ),
-                'category_3' => array(
+                ],
+                'category_3' => [
                     'name' => 'Category3',
-                ),
-                'category_4' => array(
+                ],
+                'category_4' => [
                     'name' => 'Category4',
-                ),
-            ),
-        );
+                ],
+            ],
+        ];
 
         $dataLoader = new DataLoader($this->mandango);
         $dataLoader->load($data);
@@ -174,7 +175,7 @@ class DataLoaderTest extends TestCase
     }
 
     /**
-     * @expectedException \RuntimeException
+     * @expectedException RuntimeException
      */
     public function testLoadMandangoUnitOfWorkHasPending()
     {

@@ -11,11 +11,12 @@
 
 namespace Mandango\Tests;
 
+use LogicException;
 use Mandango\MetadataFactory as BaseMetadataFactory;
 
 class MetadataFactory extends BaseMetadataFactory
 {
-    protected $classes = array(
+    protected array $classes = array(
         'Model\Article'  => false,
         'Model\Author'   => false,
         'Model\Comment'  => true,
@@ -26,17 +27,17 @@ class MetadataFactory extends BaseMetadataFactory
 
 class MetadataFactoryInfo
 {
-    public function getModelArticleClass()
+    public function getModelArticleClass(): string
     {
         return 'foo';
     }
 
-    public function getModelAuthorClass()
+    public function getModelAuthorClass(): string
     {
         return 'bar';
     }
 
-    public function getModelCommentClass()
+    public function getModelCommentClass(): string
     {
         return 'ups';
     }
@@ -92,7 +93,7 @@ class MetadataFactoryTest extends TestCase
     }
 
     /**
-     * @expectedException \LogicException
+     * @expectedException LogicException
      */
     public function testIsDocumentClassClassDoesNotExist()
     {
@@ -109,7 +110,7 @@ class MetadataFactoryTest extends TestCase
     }
 
     /**
-     * @expectedException \LogicException
+     * @expectedException LogicException
      */
     public function testIsEmbeddedDocumentClassClassDoesNotExist()
     {
@@ -126,7 +127,7 @@ class MetadataFactoryTest extends TestCase
     }
 
     /**
-     * @expectedException \LogicException
+     * @expectedException LogicException
      */
     public function testGetClassInfoClassDoesNotExist()
     {

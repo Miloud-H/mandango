@@ -17,11 +17,11 @@ use Mandango\Id\IdGeneratorContainer;
 
 class TestingIdGenerator extends BaseIdGenerator
 {
-    public function getCode(array $options)
+    public function getCode(array $options): string
     {
     }
 
-    public function getToMongoCode()
+    public function getToMongoCode(): string
     {
     }
 }

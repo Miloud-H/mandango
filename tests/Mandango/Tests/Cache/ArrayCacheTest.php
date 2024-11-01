@@ -15,7 +15,7 @@ use Mandango\Cache\ArrayCache;
 
 class ArrayCacheTest extends CacheTestCase
 {
-    protected function getCacheDriver()
+    protected function getCacheDriver(): ArrayCache
     {
         return new ArrayCache();
     }

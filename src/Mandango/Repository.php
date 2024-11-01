@@ -11,6 +11,13 @@
 
 namespace Mandango;
 
+use Mandango\Document\Document;
+use MongoCode;
+use MongoCollection;
+use MongoCursor;
+use MongoDB;
+use RuntimeException;
+
 /**
  * The base class for repositories.
  *
@@ -23,20 +30,20 @@ abstract class Repository
     /*
      * Setted by the generator.
      */
-    protected $documentClass;
-    protected $isFile;
-    protected $connectionName;
-    protected $collectionName;
+    protected string $documentClass;
+    protected bool $isFile;
+    protected ?string $connectionName;
+    protected string $collectionName;
 
-    private $mandango;
-    private $identityMap;
-    private $connection;
-    private $collection;
+    private Mandango $mandango;
+    private IdentityMapInterface $identityMap;
+    private ?ConnectionInterface $connection;
+    private ?MongoCollection $collection;
 
     /**
      * Constructor.
      *
-     * @param \Mandango\Mandango $mandango The mandango.
+     * @param Mandango $mandango The mandango.
      *
      * @api
      */
@@ -49,11 +56,11 @@ abstract class Repository
     /**
      * Returns the Mandango.
      *
-     * @return \Mandango\Mandango The Mandango.
+     * @return Mandango The Mandango.
      *
      * @api
      */
-    public function getMandango()
+    public function getMandango(): Mandango
     {
         return $this->mandango;
     }
@@ -61,11 +68,11 @@ abstract class Repository
     /**
      * Returns the identity map.
      *
-     * @return \Mandango\IdentityMapInterface The identity map.
+     * @return IdentityMapInterface The identity map.
      *
      * @api
      */
-    public function getIdentityMap()
+    public function getIdentityMap(): IdentityMapInterface
     {
         return $this->identityMap;
     }
@@ -77,7 +84,7 @@ abstract class Repository
      *
      * @api
      */
-    public function getDocumentClass()
+    public function getDocumentClass(): string
     {
         return $this->documentClass;
     }
@@ -89,7 +96,7 @@ abstract class Repository
      *
      * @api
      */
-    public function getMetadata()
+    public function getMetadata(): array
     {
         return $this->mandango->getMetadataFactory()->getClass($this->documentClass);
     }
@@ -101,7 +108,7 @@ abstract class Repository
      *
      * @api
      */
-    public function isFile()
+    public function isFile(): bool
     {
         return $this->isFile;
     }
@@ -113,7 +120,7 @@ abstract class Repository
      *
      * @api
      */
-    public function getConnectionName()
+    public function getConnectionName(): ?string
     {
         return $this->connectionName;
     }
@@ -125,7 +132,7 @@ abstract class Repository
      *
      * @api
      */
-    public function getCollectionName()
+    public function getCollectionName(): string
     {
         return $this->collectionName;
     }
@@ -133,11 +140,11 @@ abstract class Repository
     /**
      * Returns the connection.
      *
-     * @return \Mandango\ConnectionInterface The connection.
+     * @return ConnectionInterface The connection.
      *
      * @api
      */
-    public function getConnection()
+    public function getConnection(): ConnectionInterface
     {
         if (!$this->connection) {
             if ($this->connectionName) {
@@ -153,11 +160,9 @@ abstract class Repository
     /**
      * Returns the collection.
      *
-     * @return \MongoCollection The collection.
-     *
      * @api
      */
-    public function getCollection()
+    public function getCollection(): ?MongoCollection
     {
         if (!$this->collection) {
             // gridfs
@@ -181,7 +186,7 @@ abstract class Repository
      *
      * @api
      */
-    public function createQuery(array $criteria = array())
+    public function createQuery(array $criteria = []): Query
     {
         $class = $this->documentClass.'Query';
         $query = new $class($this);
@@ -206,7 +211,7 @@ abstract class Repository
      *
      * @return array The array of ids converted.
      */
-    public function idsToMongo(array $ids)
+    public function idsToMongo(array $ids): array
     {
         foreach ($ids as &$id) {
             $id = $this->idToMongo($id);
@@ -224,7 +229,7 @@ abstract class Repository
      *
      * @api
      */
-    public function findById(array $ids)
+    public function findById(array $ids): array
     {
         $mongoIds = $this->idsToMongo($ids);
         $cachedDocuments = $this->findCachedDocuments($mongoIds);
@@ -239,9 +244,9 @@ abstract class Repository
         return array_merge($cachedDocuments, $queriedDocuments);
     }
 
-    private function findCachedDocuments($mongoIds)
+    private function findCachedDocuments($mongoIds): array
     {
-        $documents = array();
+        $documents = [];
         foreach ($mongoIds as $id) {
             if ($this->identityMap->has($id)) {
                 $documents[(string) $id] = $this->identityMap->get($id);
@@ -251,14 +256,14 @@ abstract class Repository
         return $documents;
     }
 
-    private function areAllDocumentsCached($cachedDocuments, $mongoIds)
+    private function areAllDocumentsCached($cachedDocuments, $mongoIds): bool
     {
         return count($cachedDocuments) == count($mongoIds);
     }
 
-    private function getIdsToQuery($cachedDocuments, $mongoIds)
+    private function getIdsToQuery($cachedDocuments, $mongoIds): array
     {
-        $ids = array();
+        $ids = [];
         foreach ($mongoIds as $id) {
             if (!isset($cachedDocuments[(string) $id])) {
                 $ids[] = $id;
@@ -268,9 +273,9 @@ abstract class Repository
         return $ids;
     }
 
-    private function queryDocumentsByIds($ids)
+    private function queryDocumentsByIds($ids): array
     {
-        $criteria = array('_id' => array('$in' => $ids));
+        $criteria = ['_id' => ['$in' => $ids]];
 
         return $this->createQuery($criteria)->all();
     }
@@ -280,11 +285,11 @@ abstract class Repository
      *
      * @param mixed $id An id.
      *
-     * @return \Mandango\Document\Document|null The document or null if it does not exist.
+     * @return Document|null The document or null if it does not exist.
      *
      * @api
      */
-    public function findOneById($id)
+    public function findOneById($id): ?Document
     {
         $id = $this->idToMongo($id);
 
@@ -292,7 +297,7 @@ abstract class Repository
             return $this->identityMap->get($id);
         }
 
-        return $this->createQuery(array('_id' => $id))->one();
+        return $this->createQuery(['_id' => $id])->one();
     }
 
     /**
@@ -304,7 +309,7 @@ abstract class Repository
      *
      * @api
      */
-    public function count(array $query = array())
+    public function count(array $query = []): int
     {
         return $this->getCollection()->count($query);
     }
@@ -315,10 +320,8 @@ abstract class Repository
      * @param array $query     The query.
      * @param array $newObject The new object.
      * @param array $options   The options for the update operation (optional).
-     *
-     * @return mixed The result of the update collection method.
      */
-    public function update(array $query, array $newObject, array $options = array())
+    public function update(array $query, array $newObject, array $options = array()): bool
     {
         return $this->getCollection()->update($query, $newObject, $options);
     }
@@ -329,11 +332,9 @@ abstract class Repository
      * @param array $query   The query (optional, by default an empty array).
      * @param array $options The options for the remove operation (optional).
      *
-     * @return mixed The result of the remove collection method.
-     *
      * @api
      */
-    public function remove(array $query = array(), array $options = array())
+    public function remove(array $query = [], array $options = []): bool|array
     {
         return $this->getCollection()->remove($query, $options);
     }
@@ -348,11 +349,11 @@ abstract class Repository
      *
      * @return array The result
      *
-     * @see \MongoCollection::group()
+     * @see MongoCollection::group
      *
      * @api
      */
-    public function group($keys, array $initial, $reduce, array $options = array())
+    public function group($keys, array $initial, $reduce, array $options = []): array
     {
         return $this->getCollection()->group($keys, $initial, $reduce, $options);
     }
@@ -367,7 +368,7 @@ abstract class Repository
      *
      * @api
      */
-    public function distinct($field, array $query = array())
+    public function distinct(string $field, array $query = array()): array
     {
         return $this->getCollection()->distinct($field, $query);
     }
@@ -381,24 +382,22 @@ abstract class Repository
      * @param array $query   The query (optional).
      * @param array $options Extra options for the command (optional).
      *
-     * @return array With the
-     *
-     * @throws \RuntimeException If the database returns an error.
+     * @throws RuntimeException If the database returns an error.
      */
-    public function mapReduce($map, $reduce, array $out, array $query = array(), array $command = array(), $options = array())
+    public function mapReduce($map, $reduce, array $out, array $query = [], array $command = [], array $options = array()): MongoCursor
     {
-        $command = array_merge($command, array(
+        $command = array_merge($command, [
             'mapreduce' => $this->getCollectionName(),
-            'map'       => is_string($map) ? new \MongoCode($map) : $map,
-            'reduce'    => is_string($reduce) ? new \MongoCode($reduce) : $reduce,
+            'map'       => is_string($map) ? new MongoCode($map) : $map,
+            'reduce'    => is_string($reduce) ? new MongoCode($reduce) : $reduce,
             'out'       => $out,
             'query'     => $query,
-        ));
+        ]);
 
         $result = $this->command($command, $options);
 
         if (!$result['ok']) {
-            throw new \RuntimeException($result['errmsg']);
+            throw new RuntimeException($result['errmsg']);
         }
 
         if (isset($out['inline']) && $out['inline']) {
@@ -408,12 +407,12 @@ abstract class Repository
         return $this->getMongoDB()->selectCollection($result['result'])->find();
     }
 
-    private function command($command, $options = array())
+    private function command($command, $options = []): array
     {
         return $this->getMongoDB()->command($command, $options);
     }
 
-    private function getMongoDB()
+    private function getMongoDB(): MongoDB
     {
         return $this->getConnection()->getMongoDB();
     }

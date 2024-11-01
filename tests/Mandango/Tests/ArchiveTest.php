@@ -11,14 +11,16 @@
 
 namespace Mandango\Tests;
 
+use ArrayObject;
+use DateTime;
 use Mandango\Archive;
 
 class ArchiveTest extends TestCase
 {
     public function testHasGetSet()
     {
-        $object1 = new \DateTime();
-        $object2 = new \ArrayObject();
+        $object1 = new DateTime();
+        $object2 = new ArrayObject();
 
         $this->assertFalse(Archive::has($object1, 'field1'));
         $this->assertFalse(Archive::has($object1, 'field2'));
@@ -46,7 +48,7 @@ class ArchiveTest extends TestCase
 
     public function testGetByRef()
     {
-        $object = new \DateTime();
+        $object = new DateTime();
 
         $fieldKey =& Archive::getByRef($object, 'field1', array());
         $this->assertSame(array(), $fieldKey);
@@ -57,7 +59,7 @@ class ArchiveTest extends TestCase
 
     public function testGetOrDefault()
     {
-        $object = new \DateTime();
+        $object = new DateTime();
 
         $this->assertSame('foobar', Archive::getOrDefault($object, 'field1', 'foobar'));
 

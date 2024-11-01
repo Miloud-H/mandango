@@ -11,8 +11,12 @@
 
 namespace Mandango\Group;
 
+use ArrayIterator;
+use Countable;
+use IteratorAggregate;
 use Mandango\Archive;
-use Mandango\Document\Document;
+use Mandango\Document\AbstractDocument;
+use Traversable;
 
 /**
  * AbstractGroup.
@@ -21,9 +25,9 @@ use Mandango\Document\Document;
  *
  * @api
  */
-abstract class AbstractGroup implements \Countable, \IteratorAggregate
+abstract class AbstractGroup implements Countable, IteratorAggregate
 {
-    private $saved;
+    private ?array $saved;
 
     /**
      * Destructor - empties the Archive cache
@@ -36,17 +40,17 @@ abstract class AbstractGroup implements \Countable, \IteratorAggregate
     /**
      * Adds document/s to the add queue of the group.
      *
-     * @param \Mandango\Document\AbstractDocument|array $documents One or more documents.
+     * @param array|AbstractDocument $documents One or more documents.
      *
      * @api
      */
-    public function add($documents)
+    public function add(array|AbstractDocument $documents): void
     {
         if (!is_array($documents)) {
-            $documents = array($documents);
+            $documents = [$documents];
         }
 
-        $add =& Archive::getByRef($this, 'add', array());
+        $add =& Archive::getByRef($this, 'add', []);
         foreach ($documents as $document) {
             $add[] = $document;
         }
@@ -67,7 +71,7 @@ abstract class AbstractGroup implements \Countable, \IteratorAggregate
      *
      * @api
      */
-    public function clearAdd()
+    public function clearAdd(): void
     {
         Archive::remove($this, 'add');
     }
@@ -75,11 +79,11 @@ abstract class AbstractGroup implements \Countable, \IteratorAggregate
     /**
      * Adds document/s to the remove queue of the group.
      *
-     * @param \Mandango\Document\AbstractDocument|array $documents One of more documents.
+     * @param array|AbstractDocument $documents One of more documents.
      *
      * @api
      */
-    public function remove($documents)
+    public function remove(array|AbstractDocument $documents): void
     {
         if (!is_array($documents)) {
             $documents = array($documents);
@@ -106,7 +110,7 @@ abstract class AbstractGroup implements \Countable, \IteratorAggregate
      *
      * @api
      */
-    public function clearRemove()
+    public function clearRemove(): void
     {
         Archive::remove($this, 'remove');
     }
@@ -114,7 +118,7 @@ abstract class AbstractGroup implements \Countable, \IteratorAggregate
     /**
      * Returns the saved documents of the group.
      */
-    public function getSaved()
+    public function getSaved(): array
     {
         if (null === $this->saved) {
             $this->initializeSaved();
@@ -128,7 +132,7 @@ abstract class AbstractGroup implements \Countable, \IteratorAggregate
      *
      * @api
      */
-    public function all()
+    public function all(): array
     {
         $documents = array_merge($this->getSaved(), $this->getAdd());
 
@@ -146,9 +150,9 @@ abstract class AbstractGroup implements \Countable, \IteratorAggregate
      *
      * @api
      */
-    public function getIterator()
+    public function getIterator(): Traversable
     {
-        return new \ArrayIterator($this->all());
+        return new ArrayIterator($this->all());
     }
 
     /**
@@ -156,7 +160,7 @@ abstract class AbstractGroup implements \Countable, \IteratorAggregate
      *
      * @api
      */
-    public function refreshSaved()
+    public function refreshSaved(): void
     {
         $this->initializeSaved();
     }
@@ -164,7 +168,7 @@ abstract class AbstractGroup implements \Countable, \IteratorAggregate
     /**
      * Initializes the saved documents.
      */
-    private function initializeSaved()
+    private function initializeSaved(): void
     {
         $this->saved = $this->doInitializeSaved($this->doInitializeSavedData());
     }
@@ -174,7 +178,7 @@ abstract class AbstractGroup implements \Countable, \IteratorAggregate
      *
      * @api
      */
-    public function clearSaved()
+    public function clearSaved(): void
     {
         $this->saved = null;
     }
@@ -186,7 +190,7 @@ abstract class AbstractGroup implements \Countable, \IteratorAggregate
      *
      * @api
      */
-    public function isSavedInitialized()
+    public function isSavedInitialized(): bool
     {
         return null !== $this->saved;
     }
@@ -203,7 +207,7 @@ abstract class AbstractGroup implements \Countable, \IteratorAggregate
      *
      * @api
      */
-    protected function doInitializeSaved(array $data)
+    protected function doInitializeSaved(array $data): array
     {
         return $data;
     }
@@ -213,7 +217,7 @@ abstract class AbstractGroup implements \Countable, \IteratorAggregate
      *
      * @api
      */
-    public function count()
+    public function count(): int
     {
         return count($this->all());
     }
@@ -225,7 +229,7 @@ abstract class AbstractGroup implements \Countable, \IteratorAggregate
      *
      * @api
      */
-    public function replace(array $documents)
+    public function replace(array $documents): void
     {
         $this->clearAdd();
         $this->clearRemove();
@@ -239,7 +243,7 @@ abstract class AbstractGroup implements \Countable, \IteratorAggregate
      *
      * @api
      */
-    public function reset()
+    public function reset(): void
     {
         if ($this->getAdd() || $this->getRemove()) {
             $this->clearSaved();

@@ -11,23 +11,24 @@
 
 namespace Mandango\Tests\Cache;
 
+use Mandango\Cache\CacheInterface;
 use Mandango\Cache\FilesystemCache;
 use Mandango\Cache\LazyCache;
 
 class LazyCacheTest extends CacheTestCase
 {
     private $delegateMock;
-    private $lazyCache;
+    private LazyCache $lazyCache;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
 
-        $this->delegateMock = $this->getMock('Mandango\Cache\CacheInterface');
+        $this->delegateMock = $this->getMock(CacheInterface::class);
         $this->lazyCache = new LazyCache($this->delegateMock);
     }
 
-    protected function getCacheDriver()
+    protected function getCacheDriver(): LazyCache
     {
         $delegate = new FilesystemCache($this->createTempDir());
 

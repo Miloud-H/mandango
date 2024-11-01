@@ -18,12 +18,12 @@ namespace Mandango\Cache;
  */
 class ArrayCache implements CacheInterface
 {
-    private $data = array();
+    private array $data = [];
 
     /**
      * {@inheritdoc}
      */
-    public function has($key)
+    public function has(string $key): bool
     {
         return isset($this->data[$key]);
     }
@@ -31,15 +31,15 @@ class ArrayCache implements CacheInterface
     /**
      * {@inheritdoc}
      */
-    public function get($key)
+    public function get(string $key)
     {
-        return isset($this->data[$key]) ? $this->data[$key] : null;
+        return $this->data[$key] ?? null;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function set($key, $value)
+    public function set(string $key, mixed $value): void
     {
         $this->data[$key] = $value;
     }
@@ -47,7 +47,7 @@ class ArrayCache implements CacheInterface
     /**
      * {@inheritdoc}
      */
-    public function remove($key)
+    public function remove(string $key): void
     {
         unset($this->data[$key]);
     }
@@ -55,8 +55,8 @@ class ArrayCache implements CacheInterface
     /**
      * {@inheritdoc}
      */
-    public function clear()
+    public function clear(): void
     {
-        $this->data = array();
+        $this->data = [];
     }
 }

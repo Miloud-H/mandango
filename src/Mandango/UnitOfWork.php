@@ -22,32 +22,32 @@ use Mandango\Document\Document;
  */
 class UnitOfWork implements UnitOfWorkInterface
 {
-    private $mandango;
-    private $persist;
-    private $remove;
+    private Mandango $mandango;
+    private array $persist;
+    private array $remove;
 
     /**
      * Constructor.
      *
-     * @param \Mandango\Mandango $mandango The mandango.
+     * @param Mandango $mandango The mandango.
      *
      * @api
      */
     public function __construct(Mandango $mandango)
     {
         $this->mandango = $mandango;
-        $this->persist = array();
-        $this->remove = array();
+        $this->persist = [];
+        $this->remove = [];
     }
 
     /**
      * Returns the mandango.
      *
-     * @return \Mandango\Mandango The mandango.
+     * @return Mandango The mandango.
      *
      * @api
      */
-    public function getMandango()
+    public function getMandango(): Mandango
     {
         return $this->mandango;
     }
@@ -55,7 +55,7 @@ class UnitOfWork implements UnitOfWorkInterface
     /**
      * {@inheritdoc}
      */
-    public function persist($documents)
+    public function persist(array|Document $documents): void
     {
         if (!is_array($documents)) {
             $documents = array($documents);
@@ -76,13 +76,13 @@ class UnitOfWork implements UnitOfWorkInterface
     /**
      * Returns if a document is pending for persist.
      *
-     * @param \Mandango\Document\Document A document.
+     * @param Document $document A document.
      *
      * @return bool If the document is pending for persist.
      *
      * @api
      */
-    public function isPendingForPersist(Document $document)
+    public function isPendingForPersist(Document $document): bool
     {
         return isset($this->persist[get_class($document)][spl_object_hash($document)]);
     }
@@ -94,7 +94,7 @@ class UnitOfWork implements UnitOfWorkInterface
      *
      * @api
      */
-    public function hasPendingForPersist()
+    public function hasPendingForPersist(): bool
     {
         return (bool) count($this->persist);
     }
@@ -102,10 +102,10 @@ class UnitOfWork implements UnitOfWorkInterface
     /**
      * {@inheritdoc}
      */
-    public function remove($documents)
+    public function remove(array|Document $documents): void
     {
         if (!is_array($documents)) {
-            $documents = array($documents);
+            $documents = [$documents];
         }
 
         foreach ($documents as $document) {
@@ -123,13 +123,13 @@ class UnitOfWork implements UnitOfWorkInterface
     /**
      * Returns if a document is pending for remove.
      *
-     * @param \Mandango\Document\Document A document.
+     * @param Document $document A document.
      *
      * @return bool If the document is pending for remove.
      *
      * @api
      */
-    public function isPendingForRemove(Document $document)
+    public function isPendingForRemove(Document $document): bool
     {
         return isset($this->remove[get_class($document)][spl_object_hash($document)]);
     }
@@ -141,7 +141,7 @@ class UnitOfWork implements UnitOfWorkInterface
      *
      * @api
      */
-    public function hasPendingForRemove()
+    public function hasPendingForRemove(): bool
     {
         return (bool) count($this->remove);
     }
@@ -153,7 +153,7 @@ class UnitOfWork implements UnitOfWorkInterface
      *
      * @api
      */
-    public function hasPending()
+    public function hasPending(): bool
     {
         return $this->hasPendingForPersist() || $this->hasPendingForRemove();
     }
@@ -161,7 +161,7 @@ class UnitOfWork implements UnitOfWorkInterface
     /**
      * {@inheritdoc}
      */
-    public function commit()
+    public function commit(): void
     {
         // execute
         foreach ($this->persist as $class => $documents) {
@@ -178,9 +178,9 @@ class UnitOfWork implements UnitOfWorkInterface
     /**
      * {@inheritdoc}
      */
-    public function clear()
+    public function clear(): void
     {
-        $this->persist = array();
-        $this->remove = array();
+        $this->persist = [];
+        $this->remove = [];
     }
 }

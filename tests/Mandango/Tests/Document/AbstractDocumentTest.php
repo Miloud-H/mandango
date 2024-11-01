@@ -16,7 +16,7 @@ use Mandango\Document\AbstractDocument as BaseAbstractDocument;
 
 class AbstractDocument extends BaseAbstractDocument
 {
-    public function setDocumentData($data)
+    public function setDocumentData($data): void
     {
         $this->data = $data;
     }

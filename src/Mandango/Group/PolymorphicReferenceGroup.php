@@ -12,6 +12,7 @@
 namespace Mandango\Group;
 
 use Mandango\Archive;
+use Mandango\Document\AbstractDocument;
 
 /**
  * PolymorphicReferenceGroup.
@@ -25,14 +26,14 @@ class PolymorphicReferenceGroup extends PolymorphicGroup
     /**
      * Constructor.
      *
-     * @param string                              $discriminatorField The discriminator field.
-     * @param \Mandango\Document\AbstractDocument $parent             The parent document.
-     * @param string                              $field              The reference field.
+     * @param string $discriminatorField The discriminator field.
+     * @param AbstractDocument $parent             The parent document.
+     * @param string $field              The reference field.
      * @param array|Boolean                       $discriminatorMap   The discriminator map if exists, otherwise false.
      *
      * @api
      */
-    public function __construct($discriminatorField, $parent, $field, $discriminatorMap = false)
+    public function __construct(string $discriminatorField, AbstractDocument $parent, string $field, $discriminatorMap = false)
     {
         parent::__construct($discriminatorField);
 
@@ -44,11 +45,11 @@ class PolymorphicReferenceGroup extends PolymorphicGroup
     /**
      * Returns the parent document.
      *
-     * @return \Mandango\Document\AbstractDocument The parent document.
+     * @return AbstractDocument The parent document.
      *
      * @api
      */
-    public function getParent()
+    public function getParent(): AbstractDocument
     {
         return Archive::get($this, 'parent');
     }
@@ -60,7 +61,7 @@ class PolymorphicReferenceGroup extends PolymorphicGroup
      *
      * @api
      */
-    public function getField()
+    public function getField(): string
     {
         return Archive::get($this, 'field');
     }
@@ -80,7 +81,7 @@ class PolymorphicReferenceGroup extends PolymorphicGroup
     /**
      * {@inheritdoc}
      */
-    protected function doInitializeSavedData()
+    protected function doInitializeSavedData(): array
     {
         return (array) $this->getParent()->get($this->getField());
     }
@@ -88,7 +89,7 @@ class PolymorphicReferenceGroup extends PolymorphicGroup
     /**
      * {@inheritdoc}
      */
-    protected function doInitializeSaved(array $data)
+    protected function doInitializeSaved(array $data): array
     {
         $parent = $this->getParent();
         $mandango = $parent->getMandango();
@@ -96,7 +97,7 @@ class PolymorphicReferenceGroup extends PolymorphicGroup
         $discriminatorField = $this->getDiscriminatorField();
         $discriminatorMap = $this->getDiscriminatorMap();
 
-        $ids = array();
+        $ids = [];
         foreach ($data as $datum) {
             if ($discriminatorMap) {
                 $documentClass = $discriminatorMap[$datum[$discriminatorField]];
@@ -106,9 +107,9 @@ class PolymorphicReferenceGroup extends PolymorphicGroup
             $ids[$documentClass][] = $datum['id'];
         }
 
-        $documents = array();
+        $documents = [];
         foreach ($ids as $documentClass => $documentClassIds) {
-            foreach ((array) $mandango->getRepository($documentClass)->findById($documentClassIds) as $document) {
+            foreach ($mandango->getRepository($documentClass)->findById($documentClassIds) as $document) {
                 $documents[] = $document;
             }
         }

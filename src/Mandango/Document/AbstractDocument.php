@@ -23,10 +23,10 @@ use Mandango\Mandango;
  */
 abstract class AbstractDocument
 {
-    private $mandango;
+    private Mandango $mandango;
 
-    protected $data = array();
-    protected $fieldsModified = array();
+    protected array $data = [];
+    protected array $fieldsModified = [];
 
     /**
      * Constructor.
@@ -51,7 +51,7 @@ abstract class AbstractDocument
      *
      * @return Mandango The mandango.
      */
-    public function getMandango()
+    public function getMandango(): Mandango
     {
         return $this->mandango;
     }
@@ -61,7 +61,7 @@ abstract class AbstractDocument
      *
      * @return array The document metadata.
      */
-    public function getMetadata()
+    public function getMetadata(): array
     {
         return $this->getMandango()->getMetadataFactory()->getClass(get_class($this));
     }
@@ -71,7 +71,7 @@ abstract class AbstractDocument
      *
      * @return array The document data.
      */
-    public function getDocumentData()
+    public function getDocumentData(): array
     {
         return $this->data;
     }
@@ -83,7 +83,7 @@ abstract class AbstractDocument
      *
      * @api
      */
-    public function isModified()
+    public function isModified(): bool
     {
         if (isset($this->data['fields'])) {
             foreach ($this->data['fields'] as $name => $value) {
@@ -113,7 +113,7 @@ abstract class AbstractDocument
         }
 
         if (isset($this->data['embeddedsMany'])) {
-            foreach ($this->data['embeddedsMany'] as $name => $group) {
+            foreach ($this->data['embeddedsMany'] as $group) {
                 foreach ($group->getAdd() as $document) {
                     if ($document->isModified()) {
                         return true;
@@ -148,7 +148,7 @@ abstract class AbstractDocument
      *
      * @api
      */
-    public function clearModified()
+    public function clearModified(): void
     {
         if (isset($this->data['fields'])) {
             $this->clearFieldsModified();
@@ -156,7 +156,7 @@ abstract class AbstractDocument
 
         if (isset($this->data['embeddedsOne'])) {
             $this->clearEmbeddedsOneChanged();
-            foreach ($this->data['embeddedsOne'] as $name => $embedded) {
+            foreach ($this->data['embeddedsOne'] as $embedded) {
                 if ($embedded) {
                     $embedded->clearModified();
                 }
@@ -164,7 +164,7 @@ abstract class AbstractDocument
         }
 
         if (isset($this->data['embeddedsMany'])) {
-            foreach ($this->data['embeddedsMany'] as $name => $group) {
+            foreach ($this->data['embeddedsMany'] as $group) {
                 $group->clearAdd();
                 $group->clearRemove();
                 $group->clearSaved();
@@ -181,7 +181,7 @@ abstract class AbstractDocument
      *
      * @api
      */
-    public function isFieldModified($name)
+    public function isFieldModified(string $name): bool
     {
         return isset($this->fieldsModified[$name]) || array_key_exists($name, $this->fieldsModified);
     }
@@ -195,7 +195,7 @@ abstract class AbstractDocument
      *
      * @api
      */
-    public function getOriginalFieldValue($name)
+    public function getOriginalFieldValue(string $name): mixed
     {
         if ($this->isFieldModified($name)) {
             return $this->fieldsModified[$name];
@@ -215,7 +215,7 @@ abstract class AbstractDocument
      *
      * @api
      */
-    public function getFieldsModified()
+    public function getFieldsModified(): array
     {
         return $this->fieldsModified;
     }
@@ -225,7 +225,7 @@ abstract class AbstractDocument
      *
      * @api
      */
-    public function clearFieldsModified()
+    public function clearFieldsModified(): void
     {
         $this->fieldsModified = array();
     }
@@ -239,7 +239,7 @@ abstract class AbstractDocument
      *
      * @api
      */
-    public function isEmbeddedOneChanged($name)
+    public function isEmbeddedOneChanged(string $name): bool
     {
         if (!isset($this->data['embeddedsOne'])) {
             return false;
@@ -261,7 +261,7 @@ abstract class AbstractDocument
      *
      * @api
      */
-    public function getOriginalEmbeddedOneValue($name)
+    public function getOriginalEmbeddedOneValue(string $name): mixed
     {
         if (Archive::has($this, 'embedded_one.'.$name)) {
             return Archive::get($this, 'embedded_one.'.$name);
@@ -281,18 +281,18 @@ abstract class AbstractDocument
      *
      * @api
      */
-    public function getEmbeddedsOneChanged()
+    public function getEmbeddedsOneChanged(): array
     {
-        $embeddedsOneChanged = array();
+        $embeddedOneChanged = [];
         if (isset($this->data['embeddedsOne'])) {
             foreach ($this->data['embeddedsOne'] as $name => $embedded) {
                 if ($this->isEmbeddedOneChanged($name)) {
-                    $embeddedsOneChanged[$name] = $this->getOriginalEmbeddedOneValue($name);
+                    $embeddedOneChanged[$name] = $this->getOriginalEmbeddedOneValue($name);
                 }
             }
         }
 
-        return $embeddedsOneChanged;
+        return $embeddedOneChanged;
     }
 
     /**
@@ -300,7 +300,7 @@ abstract class AbstractDocument
      *
      * @api
      */
-    public function clearEmbeddedsOneChanged()
+    public function clearEmbeddedsOneChanged(): void
     {
         if (isset($this->data['embeddedsOne'])) {
             foreach ($this->data['embeddedsOne'] as $name => $embedded) {
@@ -314,14 +314,14 @@ abstract class AbstractDocument
      *
      * @return array An array with the document info.
      */
-    public function debug()
+    public function debug(): array
     {
-        $info = array();
+        $info = [];
 
         $metadata = $this->getMetadata();
 
-        $referenceFields = array();
-        foreach (array_merge($metadata['referencesOne'], $metadata['referencesMany']) as $name => $reference) {
+        $referenceFields = [];
+        foreach (array_merge($metadata['referencesOne'], $metadata['referencesMany']) as $reference) {
             $referenceFields[] = $reference['field'];
         }
 

@@ -11,6 +11,9 @@
 
 namespace Mandango\Type;
 
+use DateTime;
+use MongoDate;
+
 /**
  * DateType.
  *
@@ -25,13 +28,13 @@ class DateType extends Type
      */
     public function toMongo($value)
     {
-        if ($value instanceof \DateTime) {
+        if ($value instanceof DateTime) {
             $value = $value->getTimestamp();
         } elseif (is_string($value)) {
             $value = strtotime($value);
         }
 
-        return new \MongoDate($value);
+        return new MongoDate($value);
     }
 
     /**
@@ -39,7 +42,7 @@ class DateType extends Type
      */
     public function toPHP($value)
     {
-        $date = new \DateTime();
+        $date = new DateTime();
         $date->setTimestamp($value->sec);
 
         return $date;
@@ -48,7 +51,7 @@ class DateType extends Type
     /**
      * {@inheritdoc}
      */
-    public function toMongoInString()
+    public function toMongoInString(): string
     {
         return '%to% = %from%; if (%to% instanceof \DateTime) { %to% = %from%->getTimestamp(); } elseif (is_string(%to%)) { %to% = strtotime(%from%); } %to% = new \MongoDate(%to%);';
     }
@@ -56,7 +59,7 @@ class DateType extends Type
     /**
      * {@inheritdoc}
      */
-    public function toPHPInString()
+    public function toPHPInString(): string
     {
         return '%to% = new \DateTime(); %to%->setTimestamp(%from%->sec);';
     }

@@ -16,8 +16,8 @@ namespace Mandango\Cache;
  */
 class LazyCache implements CacheInterface
 {
-    private $delegate;
-    private $data = array();
+    private CacheInterface $delegate;
+    private array $data = [];
 
     public function __construct(CacheInterface $delegate)
     {
@@ -27,7 +27,7 @@ class LazyCache implements CacheInterface
     /**
      * {@inheritdoc}
      */
-    public function has($key)
+    public function has(string $key): bool
     {
         $this->initKey($key);
 
@@ -37,14 +37,14 @@ class LazyCache implements CacheInterface
     /**
      * {@inheritdoc}
      */
-    public function get($key)
+    public function get(string $key): mixed
     {
         $this->initKey($key);
 
         return $this->data[$key];
     }
 
-    private function initKey($key)
+    private function initKey($key): void
     {
         if (!array_key_exists($key, $this->data)) {
             $this->data[$key] = $this->delegate->get($key);
@@ -54,7 +54,7 @@ class LazyCache implements CacheInterface
     /**
      * {@inheritdoc}
      */
-    public function set($key, $value)
+    public function set(string $key, mixed $value): void
     {
         $this->data[$key] = $value;
         $this->delegate->set($key, $value);
@@ -63,7 +63,7 @@ class LazyCache implements CacheInterface
     /**
      * {@inheritdoc}
      */
-    public function remove($key)
+    public function remove(string $key): void
     {
         unset($this->data[$key]);
         $this->delegate->remove($key);
@@ -72,9 +72,9 @@ class LazyCache implements CacheInterface
     /**
      * {@inheritdoc}
      */
-    public function clear()
+    public function clear(): void
     {
-        $this->data = array();
+        $this->data = [];
         $this->delegate->clear();
     }
 }

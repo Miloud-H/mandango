@@ -12,6 +12,8 @@
 namespace Mandango\Document;
 
 use Mandango\Archive;
+use Mandango\Repository;
+use MongoId;
 
 /**
  * The base class for documents.
@@ -22,17 +24,17 @@ use Mandango\Archive;
  */
 abstract class Document extends AbstractDocument
 {
-    private $isNew = true;
-    private $id;
+    private bool $isNew = true;
+    private ?MongoId $id;
 
     /**
      * Returns the repository.
      *
-     * @return \Mandango\Repository The repository.
+     * @return Repository The repository.
      *
      * @api
      */
-    public function getRepository()
+    public function getRepository(): Repository
     {
         return $this->getMandango()->getRepository(get_class($this));
     }
@@ -40,11 +42,9 @@ abstract class Document extends AbstractDocument
     /**
      * Set the id of the document.
      *
-     * @param mixed $id The id.
-     *
-     * @return \Mandango\Document\Document The document (fluent interface).
+     * @return Document The document (fluent interface).
      */
-    public function setId($id)
+    public function setId(MongoId $id): self
     {
         $this->id = $id;
 
@@ -54,11 +54,11 @@ abstract class Document extends AbstractDocument
     /**
      * Returns the id of document.
      *
-     * @return \MongoId|null The id of the document or null if it is new.
+     * @return MongoId|null The id of the document or null if it is new.
      *
      * @api
      */
-    public function getId()
+    public function getId(): ?MongoId
     {
         return $this->id;
     }
@@ -68,11 +68,11 @@ abstract class Document extends AbstractDocument
      *
      * @param Boolean $isNew If the document is new.
      *
-     * @return \Mandango\Document\Document The document (fluent interface).
+     * @return Document The document (fluent interface).
      */
-    public function setIsNew($isNew)
+    public function setIsNew(bool $isNew): self
     {
-        $this->isNew = (Boolean) $isNew;
+        $this->isNew = $isNew;
 
         return $this;
     }
@@ -84,7 +84,7 @@ abstract class Document extends AbstractDocument
      *
      * @api
      */
-    public function isNew()
+    public function isNew(): bool
     {
         return $this->isNew;
     }
@@ -92,13 +92,13 @@ abstract class Document extends AbstractDocument
     /**
      * Refresh the document data from the database.
      *
-     * @return \Mandango\Document\Document The document (fluent interface).
+     * @return Document The document (fluent interface).
      *
      * @throws \LogicException
      *
      * @api
      */
-    public function refresh()
+    public function refresh(): self
     {
         if ($this->isNew()) {
             throw new \LogicException('The document is new.');
@@ -114,17 +114,17 @@ abstract class Document extends AbstractDocument
      *
      * @param array $options The options for the batch insert or update operation, it depends on if the document is new or not (optional).
      *
-     * @return \Mandango\Document\Document The document (fluent interface).
+     * @return Document The document (fluent interface).
      *
      * @api
      */
-    public function save(array $options = array())
+    public function save(array $options = []): self
     {
         if ($this->isNew()) {
             $batchInsertOptions = $options;
-            $updateOptions = array();
+            $updateOptions = [];
         } else {
-            $batchInsertOptions = array();
+            $batchInsertOptions = [];
             $updateOptions = $options;
         }
 
@@ -140,7 +140,7 @@ abstract class Document extends AbstractDocument
      *
      * @api
      */
-    public function delete(array $options = array())
+    public function delete(array $options = array()): void
     {
         $this->getRepository()->delete($this, $options);
     }
@@ -150,9 +150,9 @@ abstract class Document extends AbstractDocument
      *
      * @param string $hash The query hash.
      */
-    public function addQueryHash($hash)
+    public function addQueryHash($hash): void
     {
-        $queryHashes =& Archive::getByRef($this, 'query_hashes', array());
+        $queryHashes =& Archive::getByRef($this, 'query_hashes', []);
         $queryHashes[] = $hash;
     }
 
@@ -161,9 +161,9 @@ abstract class Document extends AbstractDocument
      *
      * @return array The query hashes.
      */
-    public function getQueryHashes()
+    public function getQueryHashes(): array
     {
-        return Archive::getOrDefault($this, 'query_hashes', array());
+        return Archive::getOrDefault($this, 'query_hashes', []);
     }
 
     /**
@@ -171,9 +171,9 @@ abstract class Document extends AbstractDocument
      *
      * @param string $hash The query hash.
      */
-    public function removeQueryHash($hash)
+    public function removeQueryHash(string $hash): void
     {
-        $queryHashes =& Archive::getByRef($this, 'query_hashes', array());
+        $queryHashes =& Archive::getByRef($this, 'query_hashes', []);
         unset($queryHashes[array_search($hash, $queryHashes)]);
         $queryHashes = array_values($queryHashes);
     }
@@ -181,7 +181,7 @@ abstract class Document extends AbstractDocument
     /**
      * Clear the query hashes.
      */
-    public function clearQueryHashes()
+    public function clearQueryHashes(): void
     {
         Archive::remove($this, 'query_hashes');
     }
@@ -189,12 +189,12 @@ abstract class Document extends AbstractDocument
     /**
      * Add a field cache.
      */
-    public function addFieldCache($field)
+    public function addFieldCache($field): void
     {
         $cache = $this->getMandango()->getCache();
 
         foreach ($this->getQueryHashes() as $hash) {
-            $value = $cache->has($hash) ? $cache->get($hash) : array();
+            $value = $cache->has($hash) ? $cache->get($hash) : [];
             $value['fields'][$field] = 1;
             $cache->set($hash, $value);
         }
@@ -203,12 +203,12 @@ abstract class Document extends AbstractDocument
     /**
      * Adds a reference cache
      */
-    public function addReferenceCache($reference)
+    public function addReferenceCache($reference): void
     {
         $cache = $this->getMandango()->getCache();
 
         foreach ($this->getQueryHashes() as $hash) {
-            $value = $cache->has($hash) ? $cache->get($hash) : array();
+            $value = $cache->has($hash) ? $cache->get($hash) : [];
             if (!isset($value['references']) || !in_array($reference, $value['references'])) {
                 $value['references'][] = $reference;
                 $cache->set($hash, $value);

@@ -11,7 +11,6 @@
 
 namespace Mandango\Extension;
 
-use Mandango\Mondator\Definition\Method;
 use Mandango\Mondator\Extension;
 
 /**
@@ -24,7 +23,7 @@ class DocumentArrayAccess extends Extension
     /**
      * {@inheritdoc}
      */
-    protected function doClassProcess()
+    protected function doClassProcess(): void
     {
         $this->definitions['document_base']->addInterface('\ArrayAccess');
 

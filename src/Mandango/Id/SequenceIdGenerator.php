@@ -11,7 +11,7 @@
 
 namespace Mandango\Id;
 
-use Mandango\Document\Document;
+use InvalidArgumentException;
 
 /**
  * Generates a sequence.
@@ -23,21 +23,21 @@ class SequenceIdGenerator extends BaseIdGenerator
     /**
      * {@inheritdoc}
      */
-    public function getCode(array $options)
+    public function getCode(array $options): string
     {
-        $increment = isset($options['increment']) ? $options['increment'] : 1;
-        $start = isset($options['start']) ? $options['start'] : null;
+        $increment = $options['increment'] ?? 1;
+        $start = $options['start'] ?? null;
 
         // increment
         if (!is_int($increment) || 0 === $increment) {
-            throw new \InvalidArgumentException('The option "increment" must be an integer distinct of 0.');
+            throw new InvalidArgumentException('The option "increment" must be an integer distinct of 0.');
         }
 
         // start
         if (null === $start) {
             $start = $increment > 0 ? 1 : -1;
         } elseif (!is_int($start) || 0 === $start) {
-            throw new \InvalidArgumentException('The option "start" must be an integer distinct of 0.');
+            throw new InvalidArgumentException('The option "start" must be an integer distinct of 0.');
         }
 
         return <<<EOF
@@ -71,7 +71,7 @@ EOF;
     /**
      * {@inheritdoc}
      */
-    public function getToMongoCode()
+    public function getToMongoCode(): string
     {
         return <<<EOF
 %id% = (int) %id%;

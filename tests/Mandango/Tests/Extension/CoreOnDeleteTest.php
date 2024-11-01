@@ -12,7 +12,6 @@
 namespace Mandango\Tests\Extension;
 
 use Mandango\Tests\TestCase;
-use Mandango\Group\EmbeddedGroup;
 
 class CoreOnDeleteTest extends TestCase
 {

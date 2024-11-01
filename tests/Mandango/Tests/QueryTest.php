@@ -11,24 +11,28 @@
 
 namespace Mandango\Tests;
 
-use Mandango\Query;
+use InvalidArgumentException;
+use Model\ArticleQuery;
+use Model\CategoryQuery;
+use MongoId;
+use RuntimeException;
 
 class QueryTest extends TestCase
 {
     protected $identityMap;
-    protected $query;
+    protected ArticleQuery $query;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->identityMap = $this->mandango->getRepository('Model\Article')->getIdentityMap();
-        $this->query = new \Model\ArticleQuery($this->mandango->getRepository('Model\Article'));
+        $this->query = new ArticleQuery($this->mandango->getRepository('Model\Article'));
     }
 
     public function testConstructor()
     {
-        $query = new \Model\CategoryQuery($repository = $this->mandango->getRepository('Model\Category'));
+        $query = new CategoryQuery($repository = $this->mandango->getRepository('Model\Category'));
         $this->assertSame($repository, $query->getRepository());
         $hash = $query->getHash();
         $this->assertInternalType('string', $hash);
@@ -68,7 +72,7 @@ class QueryTest extends TestCase
         $this->assertSame($query, $query->mergeCriteria($criteria1));
         $this->assertSame($criteria1, $query->getCriteria());
 
-        $criteria2 = array('author' => new \MongoId($this->generateObjectId()));
+        $criteria2 = array('author' => new MongoId($this->generateObjectId()));
         $query->mergeCriteria($criteria2);
         $this->assertSame(array('is_active' => true, 'author' => $criteria2['author']), $query->getCriteria());
 
@@ -106,7 +110,7 @@ class QueryTest extends TestCase
     }
 
     /**
-     * @expectedException \InvalidArgumentException
+     * @expectedException InvalidArgumentException
      * @dataProvider      providerNotArrayOrNull
      */
     public function testReferencesNotArrayOrNull($value)
@@ -132,7 +136,7 @@ class QueryTest extends TestCase
     }
 
     /**
-     * @expectedException \InvalidArgumentException
+     * @expectedException InvalidArgumentException
      * @dataProvider      providerNotArrayOrNull
      */
     public function testSortNotArrayOrNull($value)
@@ -156,7 +160,7 @@ class QueryTest extends TestCase
     }
 
     /**
-     * @expectedException \InvalidArgumentException
+     * @expectedException InvalidArgumentException
      * @dataProvider      providerNotValidIntOrNull
      */
     public function testLimitNotValidIntOrNull($value)
@@ -180,7 +184,7 @@ class QueryTest extends TestCase
     }
 
     /**
-     * @expectedException \InvalidArgumentException
+     * @expectedException InvalidArgumentException
      * @dataProvider      providerNotValidIntOrNull
      */
     public function testSkipNotValidIntOrNull($value)
@@ -204,7 +208,7 @@ class QueryTest extends TestCase
     }
 
     /**
-     * @expectedException \InvalidArgumentException
+     * @expectedException InvalidArgumentException
      * @dataProvider      providerNotValidIntOrNull
      */
     public function testBatchSizeNotValidIntOrNull($value)
@@ -230,7 +234,7 @@ class QueryTest extends TestCase
     }
 
     /**
-     * @expectedException \InvalidArgumentException
+     * @expectedException InvalidArgumentException
      * @dataProvider      providerNotArrayOrNull
      */
     public function testHintNotArrayOrNull($value)
@@ -254,7 +258,7 @@ class QueryTest extends TestCase
     }
 
     /**
-     * @expectedException \InvalidArgumentException
+     * @expectedException InvalidArgumentException
      * @dataProvider      providerNotBoolean
      */
     public function testSlaveOkayNotBoolean($value)
@@ -275,7 +279,7 @@ class QueryTest extends TestCase
     }
 
     /**
-     * @expectedException \InvalidArgumentException
+     * @expectedException InvalidArgumentException
      * @dataProvider      providerNotBoolean
      */
     public function testSnapshotNotBoolean($value)
@@ -299,7 +303,7 @@ class QueryTest extends TestCase
     }
 
     /**
-     * @expectedException \InvalidArgumentException
+     * @expectedException InvalidArgumentException
      * @dataProvider      providerNotValidIntOrNull
      */
     public function testTimeoutNotValidIntOrNull($value)
@@ -323,7 +327,7 @@ class QueryTest extends TestCase
             $this->assertSame(array($this->query->getHash()), $article->getQueryHashes());
         }
 
-        $query = new \Model\ArticleQuery($this->mandango->getRepository('Model\Article'));
+        $query = new ArticleQuery($this->mandango->getRepository('Model\Article'));
         $articles2 = $query->all();
         foreach ($articles2 as $key => $article2) {
             $this->assertSame($article2, $articles[$key]);
@@ -497,7 +501,7 @@ class QueryTest extends TestCase
     }
 
     /**
-     * @expectedException \RuntimeException
+     * @expectedException RuntimeException
      */
     public function testAllReferencesNotExist()
     {
@@ -550,13 +554,13 @@ class QueryTest extends TestCase
 
     public function testCount()
     {
-        $articles = $this->createArticlesRaw(20);
+        $this->createArticlesRaw(20);
         $this->assertSame(20, $this->query->count());
     }
 
     public function testCountableInterface()
     {
-        $articles = $this->createArticlesRaw(5);
+        $this->createArticlesRaw(5);
         $this->assertSame(5, count($this->query));
     }
 
@@ -594,30 +598,30 @@ class QueryTest extends TestCase
         $this->assertInstanceOf('MongoCursor', $cursor);
     }
 
-    public function providerNotArrayOrNull()
+    public function providerNotArrayOrNull(): array
     {
-        return array(
-            array(true),
-            array(1),
-            array('string'),
-        );
+        return [
+            [true],
+            [1],
+            ['string'],
+        ];
     }
 
-    public function providerNotValidIntOrNull()
+    public function providerNotValidIntOrNull(): array
     {
-        return array(
-            array(true),
-            array(array(1, 2)),
-            array(1.1),
-        );
+        return [
+            [true],
+            [[1, 2]],
+            [1.1],
+        ];
     }
 
-    public function providerNotBoolean()
+    public function providerNotBoolean(): array
     {
-        return array(
-            array(1),
-            array('true'),
-            array(array(true)),
-        );
+        return [
+            [1],
+            ['true'],
+            [[true]],
+        ];
     }
 }

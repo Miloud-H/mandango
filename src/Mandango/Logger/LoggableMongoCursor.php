@@ -11,22 +11,24 @@
 
 namespace Mandango\Logger;
 
+use MongoCursor;
+
 /**
  * A loggable MongoCursor.
  *
  * @author Pablo Díez <pablodip@gmail.com>
  */
-class LoggableMongoCursor extends \MongoCursor
+class LoggableMongoCursor extends MongoCursor
 {
-    private $collection;
+    private LoggableMongoCollection $collection;
     private $type;
-    private $explainCursor;
-    private $time;
+    private MongoCursor $explainCursor;
+    private Time $time;
 
     /**
      * Constructor.
      */
-    public function __construct(LoggableMongoCollection $collection, array $query = array(), array $fields = array(), $type = 'find')
+    public function __construct(LoggableMongoCollection $collection, array $query = [], array $fields = [], $type = 'find')
     {
         $this->collection = $collection;
 
@@ -34,7 +36,7 @@ class LoggableMongoCursor extends \MongoCursor
         $ns = $collection->getDB()->__toString().'.'.$collection->getName();
 
         $this->type = $type;
-        $this->explainCursor = new \MongoCursor($mongo, $ns, $query, $fields);
+        $this->explainCursor = new MongoCursor($mongo, $ns, $query, $fields);
         $this->time = new Time();
 
         parent::__construct($mongo, $ns, $query, $fields);
@@ -43,9 +45,9 @@ class LoggableMongoCursor extends \MongoCursor
     /**
      * Returns the LoggableMongoCollection.
      *
-     * @return \Mandango\Logger\LoggableMongoCollection The LoggableMongoCollection.
+     * @return LoggableMongoCollection The LoggableMongoCollection.
      */
-    public function getCollection()
+    public function getCollection(): LoggableMongoCollection
     {
         return $this->collection;
     }
@@ -55,7 +57,7 @@ class LoggableMongoCursor extends \MongoCursor
      *
      * @param array $log The log.
      */
-    public function log(array $log)
+    public function log(array $log): void
     {
         $this->collection->log($log);
     }
@@ -63,7 +65,7 @@ class LoggableMongoCursor extends \MongoCursor
     /**
      * hasNext.
      */
-    public function hasNext()
+    public function hasNext(): bool
     {
         $this->logQuery();
 
@@ -73,7 +75,7 @@ class LoggableMongoCursor extends \MongoCursor
     /**
      * getNext.
      */
-    public function getNext()
+    public function getNext(): array
     {
         $this->logQuery();
 
@@ -83,30 +85,28 @@ class LoggableMongoCursor extends \MongoCursor
     /**
      * rewind.
      */
-    public function rewind()
+    public function rewind(): void
     {
         $this->logQuery();
-
-        return parent::rewind();
+        parent::rewind();
     }
 
     /**
      * next.
      */
-    public function next()
+    public function next(): void
     {
         $this->logQuery();
-
-        return parent::next();
+        parent::next();
     }
 
     /**
      * count.
      */
-    public function count($foundOnly = false)
+    public function count($all = false): int
     {
         $this->time->start();
-        $return = parent::count($foundOnly);
+        $return = parent::count($all);
         $time = $this->time->stop();
 
         $info = $this->info();
@@ -116,7 +116,7 @@ class LoggableMongoCursor extends \MongoCursor
             'query'     => is_array($info['query']) ? $info['query'] : array(),
             'limit'     => $info['limit'],
             'skip'      => $info['skip'],
-            'foundOnly' => $foundOnly,
+            'foundOnly' => $all,
             'time'      => $time,
         ));
 
@@ -126,7 +126,7 @@ class LoggableMongoCursor extends \MongoCursor
     /*
      * log the query.
      */
-    protected function logQuery()
+    protected function logQuery(): void
     {
         $info = $this->info();
 
@@ -179,12 +179,12 @@ class LoggableMongoCursor extends \MongoCursor
             if (isset($info['query']['$snapshot'])) {
                 $log['snapshot'] = 1;
             }
-            $log['explain'] = array(
+            $log['explain'] = [
                 'nscanned'        => $explain['nscanned'],
                 'nscannedObjects' => $explain['nscannedObjects'],
                 'n'               => $explain['n'],
                 'indexBounds'     => $explain['indexBounds'],
-            );
+            ];
             $log['time'] = $explain['millis'];
 
             $this->log($log);

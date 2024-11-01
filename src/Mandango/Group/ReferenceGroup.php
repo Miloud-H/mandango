@@ -12,6 +12,8 @@
 namespace Mandango\Group;
 
 use Mandango\Archive;
+use Mandango\Document\AbstractDocument;
+use Mandango\Query;
 
 /**
  * ReferenceGroup.
@@ -25,13 +27,13 @@ class ReferenceGroup extends Group
     /**
      * Constructor.
      *
-     * @param string                              $documentClass The document class.
-     * @param \Mandango\Document\AbstractDocument $parent The parent document.
-     * @param string                              $field  The reference field.
+     * @param string $documentClass The document class.
+     * @param AbstractDocument $parent The parent document.
+     * @param string $field  The reference field.
      *
      * @api
      */
-    public function __construct($documentClass, $parent, $field)
+    public function __construct(string $documentClass, AbstractDocument $parent, string $field)
     {
         parent::__construct($documentClass);
 
@@ -42,11 +44,11 @@ class ReferenceGroup extends Group
     /**
      * Returns the parent document.
      *
-     * @return \Mandango\Document\AbstractDocument The parent document.
+     * @return AbstractDocument The parent document.
      *
      * @api
      */
-    public function getParent()
+    public function getParent(): AbstractDocument
     {
         return Archive::get($this, 'parent');
     }
@@ -58,7 +60,7 @@ class ReferenceGroup extends Group
      *
      * @api
      */
-    public function getField()
+    public function getField(): string
     {
         return Archive::get($this, 'field');
     }
@@ -66,7 +68,7 @@ class ReferenceGroup extends Group
     /**
      * {@inheritdoc}
      */
-    protected function doInitializeSavedData()
+    protected function doInitializeSavedData(): array
     {
         return (array) $this->getParent()->{'get'.ucfirst($this->getField())}();
     }
@@ -74,7 +76,7 @@ class ReferenceGroup extends Group
     /**
      * {@inheritdoc}
      */
-    protected function doInitializeSaved(array $data)
+    protected function doInitializeSaved(array $data): array
     {
         return $this->getParent()->getMandango()->getRepository($this->getDocumentClass())->findById($data);
     }
@@ -84,10 +86,10 @@ class ReferenceGroup extends Group
      *
      * @api
      */
-    public function createQuery()
+    public function createQuery(): Query
     {
-        return $this->getParent()->getMandango()->getRepository($this->getDocumentClass())->createQuery(array(
-            '_id' => array('$in' => $this->doInitializeSavedData()),
-        ));
+        return $this->getParent()->getMandango()->getRepository($this->getDocumentClass())->createQuery([
+            '_id' => ['$in' => $this->doInitializeSavedData()],
+        ]);
     }
 }

@@ -15,7 +15,7 @@ use Mandango\Cache\FilesystemCache;
 
 class FilesystemCacheTest extends CacheTestCase
 {
-    protected function getCacheDriver()
+    protected function getCacheDriver(): FilesystemCache
     {
         return new FilesystemCache($this->createTempDir());
     }

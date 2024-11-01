@@ -11,6 +11,8 @@
 
 namespace Mandango\Type;
 
+use MongoBinData;
+
 /**
  * BinDataType.
  *
@@ -29,7 +31,7 @@ class BinDataType extends Type
             $value = file_get_contents($value);
         }
 
-        return new \MongoBinData($value,  \MongoBinData::BYTE_ARRAY);
+        return new MongoBinData($value,  MongoBinData::BYTE_ARRAY);
     }
 
     /**
@@ -43,7 +45,7 @@ class BinDataType extends Type
     /**
      * {@inheritdoc}
      */
-    public function toMongoInString()
+    public function toMongoInString(): string
     {
         return 'if (is_file(%from%)) { %from% = file_get_contents(%from%); } %to% = new \MongoBinData(%from%,  \MongoBinData::BYTE_ARRAY);';
     }
@@ -51,7 +53,7 @@ class BinDataType extends Type
     /**
      * {@inheritdoc}
      */
-    public function toPHPInString()
+    public function toPHPInString(): string
     {
         return '%to% = %from%->bin;';
     }

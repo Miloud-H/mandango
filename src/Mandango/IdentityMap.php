@@ -22,7 +22,7 @@ use Mandango\Document\Document;
  */
 class IdentityMap implements IdentityMapInterface
 {
-    private $documents;
+    private array $documents;
 
     /**
      * Constructor.
@@ -31,13 +31,13 @@ class IdentityMap implements IdentityMapInterface
      */
     public function __construct()
     {
-        $this->documents = array();
+        $this->documents = [];
     }
 
     /**
      * {@inheritdoc}
      */
-    public function set($id, Document $document)
+    public function set($id, Document $document): void
     {
         $this->documents[(string) $id] = $document;
     }
@@ -45,7 +45,7 @@ class IdentityMap implements IdentityMapInterface
     /**
      * {@inheritdoc}
      */
-    public function has($id)
+    public function has($id): bool
     {
         return isset($this->documents[(string) $id]);
     }
@@ -53,7 +53,7 @@ class IdentityMap implements IdentityMapInterface
     /**
      * {@inheritdoc}
      */
-    public function get($id)
+    public function get($id): Document
     {
         return $this->documents[(string) $id];
     }
@@ -61,7 +61,7 @@ class IdentityMap implements IdentityMapInterface
     /**
      * {@inheritdoc}
      */
-    public function all()
+    public function all(): array
     {
         return $this->documents;
     }
@@ -69,7 +69,7 @@ class IdentityMap implements IdentityMapInterface
     /**
      * {@inheritdoc}
      */
-    public function &allByReference()
+    public function &allByReference(): array
     {
         return $this->documents;
     }
@@ -77,7 +77,7 @@ class IdentityMap implements IdentityMapInterface
     /**
      * {@inheritdoc}
      */
-    public function remove($id)
+    public function remove($id): void
     {
         unset($this->documents[(string) $id]);
     }
@@ -85,8 +85,8 @@ class IdentityMap implements IdentityMapInterface
     /**
      * {@inheritdoc}
      */
-    public function clear()
+    public function clear(): void
     {
-        $this->documents = array();
+        $this->documents = [];
     }
 }

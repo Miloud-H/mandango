@@ -11,6 +11,12 @@
 
 namespace Mandango;
 
+use LogicException;
+use Mandango\Logger\LoggableMongo;
+use MongoClient;
+use MongoDB;
+use RuntimeException;
+
 /**
  * Connection.
  *
@@ -20,15 +26,15 @@ namespace Mandango;
  */
 class Connection implements ConnectionInterface
 {
-    private $server;
-    private $dbName;
-    private $options;
+    private string $server;
+    private string $dbName;
+    private array $options;
 
     private $loggerCallable;
-    private $logDefault;
+    private ?array $logDefault;
 
-    private $mongo;
-    private $mongoDB;
+    private ?MongoClient $mongo;
+    private ?MongoDB $mongoDB;
 
     /**
      * Constructor.
@@ -39,7 +45,7 @@ class Connection implements ConnectionInterface
      *
      * @api
      */
-    public function __construct($server, $dbName, array $options = array())
+    public function __construct(string $server, string $dbName, array $options = [])
     {
         $this->server = $server;
         $this->dbName = $dbName;
@@ -51,14 +57,14 @@ class Connection implements ConnectionInterface
      *
      * @param string $server The server.
      *
-     * @throws \LogicException If the mongo is initialized.
+     * @throws LogicException If the mongo is initialized.
      *
      * @api
      */
-    public function setServer($server)
+    public function setServer(string $server): void
     {
         if (null !== $this->mongo) {
-            throw new \LogicException('The mongo is initialized.');
+            throw new LogicException('The mongo is initialized.');
         }
 
         $this->server = $server;
@@ -71,7 +77,7 @@ class Connection implements ConnectionInterface
      *
      * @api
      */
-    public function getServer()
+    public function getServer(): string
     {
         return $this->server;
     }
@@ -81,14 +87,14 @@ class Connection implements ConnectionInterface
      *
      * @param string $dbName The db name.
      *
-     * @throws \LogicException If the mongoDb is initialized.
+     * @throws LogicException If the mongoDb is initialized.
      *
      * @api
      */
-    public function setDbName($dbName)
+    public function setDbName(string $dbName): void
     {
         if (null !== $this->mongoDB) {
-            throw new \LogicException('The mongoDb is initialized.');
+            throw new LogicException('The mongoDb is initialized.');
         }
 
         $this->dbName = $dbName;
@@ -101,7 +107,7 @@ class Connection implements ConnectionInterface
      *
      * @api
      */
-    public function getDbName()
+    public function getDbName(): string
     {
         return $this->dbName;
     }
@@ -111,14 +117,14 @@ class Connection implements ConnectionInterface
      *
      * @param array $options An array of options.
      *
-     * @throws \LogicException If the mongo is initialized.
+     * @throws LogicException If the mongo is initialized.
      *
      * @api
      */
-    public function setOptions(array $options)
+    public function setOptions(array $options): void
     {
         if (null !== $this->mongo) {
-            throw new \LogicException('The mongo is initialized.');
+            throw new LogicException('The mongo is initialized.');
         }
 
         $this->options = $options;
@@ -131,7 +137,7 @@ class Connection implements ConnectionInterface
      *
      * @api
      */
-    public function getOptions()
+    public function getOptions(): array
     {
         return $this->options;
     }
@@ -139,10 +145,10 @@ class Connection implements ConnectionInterface
     /**
      * {@inheritdoc}
      */
-    public function setLoggerCallable($loggerCallable = null)
+    public function setLoggerCallable($loggerCallable = null): void
     {
         if (null !== $this->mongo) {
-            throw new \RuntimeException('The connection has already Mongo.');
+            throw new RuntimeException('The connection has already Mongo.');
         }
 
         $this->loggerCallable = $loggerCallable;
@@ -159,10 +165,10 @@ class Connection implements ConnectionInterface
     /**
      * {@inheritdoc}
      */
-    public function setLogDefault(array $logDefault)
+    public function setLogDefault(array $logDefault): void
     {
         if (null !== $this->mongo) {
-            throw new \RuntimeException('The connection has already Mongo.');
+            throw new RuntimeException('The connection has already Mongo.');
         }
 
         $this->logDefault = $logDefault;
@@ -171,7 +177,7 @@ class Connection implements ConnectionInterface
     /**
      * {@inheritdoc}
      */
-    public function getLogDefault()
+    public function getLogDefault(): ?array
     {
         return $this->logDefault;
     }
@@ -179,17 +185,17 @@ class Connection implements ConnectionInterface
     /**
      * {@inheritdoc}
      */
-    public function getMongo()
+    public function getMongo(): MongoClient
     {
         if (null === $this->mongo) {
             if (null !== $this->loggerCallable) {
-                $this->mongo = new \Mandango\Logger\LoggableMongo($this->server, $this->options);
+                $this->mongo = new LoggableMongo($this->server, $this->options);
                 $this->mongo->setLoggerCallable($this->loggerCallable);
                 if (null !== $this->logDefault) {
                     $this->mongo->setLogDefault($this->logDefault);
                 }
             } else {
-                $this->mongo = new \Mongo($this->server, $this->options);
+                $this->mongo = new MongoClient($this->server, $this->options);
             }
         }
 
@@ -199,7 +205,7 @@ class Connection implements ConnectionInterface
     /**
      * {@inheritdoc}
      */
-    public function getMongoDB()
+    public function getMongoDB(): MongoDB
     {
         if (null === $this->mongoDB) {
             $this->mongoDB = $this->getMongo()->selectDB($this->dbName);

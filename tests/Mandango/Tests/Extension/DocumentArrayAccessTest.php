@@ -11,12 +11,14 @@
 
 namespace Mandango\Tests\Extension;
 
+use InvalidArgumentException;
+use LogicException;
 use Mandango\Tests\TestCase;
 
 class DocumentArrayAccessTest extends TestCase
 {
     /**
-     * @expectedException \LogicException
+     * @expectedException LogicException
      */
     public function testOffsetExists()
     {
@@ -32,7 +34,7 @@ class DocumentArrayAccessTest extends TestCase
     }
 
     /**
-     * @expectedException \InvalidArgumentException
+     * @expectedException InvalidArgumentException
      */
     public function testOffsetSetNameNotExists()
     {
@@ -48,7 +50,7 @@ class DocumentArrayAccessTest extends TestCase
     }
 
     /**
-     * @expectedException \InvalidArgumentException
+     * @expectedException InvalidArgumentException
      */
     public function testOffsetGetNameNotExists()
     {
@@ -57,7 +59,7 @@ class DocumentArrayAccessTest extends TestCase
     }
 
     /**
-     * @expectedException \LogicException
+     * @expectedException LogicException
      */
     public function testOffsetUnset()
     {

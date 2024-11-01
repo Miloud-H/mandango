@@ -11,8 +11,6 @@
 
 namespace Mandango\Id;
 
-use Mandango\Document\Document;
-
 /**
  * Generates a native identifier.
  *
@@ -23,7 +21,7 @@ class NativeIdGenerator extends BaseIdGenerator
     /**
      * {@inheritdoc}
      */
-    public function getCode(array $options)
+    public function getCode(array $options): string
     {
         return '%id% = new \MongoId();';
     }
@@ -31,7 +29,7 @@ class NativeIdGenerator extends BaseIdGenerator
     /**
      * {@inheritdoc}
      */
-    public function getToMongoCode()
+    public function getToMongoCode(): string
     {
         return <<<EOF
 if (!%id% instanceof \MongoId) {

@@ -18,12 +18,12 @@ namespace Mandango\Logger;
  */
 class Time
 {
-    private $time;
+    private ?float $time;
 
     /**
      * Start to count the time.
      */
-    public function start()
+    public function start(): void
     {
         $this->time = microtime(true);
     }
@@ -33,7 +33,7 @@ class Time
      *
      * @return int The result.
      */
-    public function stop()
+    public function stop(): int
     {
         $time = (int) round((microtime(true) - $this->time) * 1000);
 

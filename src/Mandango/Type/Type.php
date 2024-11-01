@@ -49,7 +49,7 @@ abstract class Type
      *
      * @api
      */
-    abstract public function toMongoInString();
+    abstract public function toMongoInString(): string;
 
     /**
      * Convert a Mongo value to a PHP value (in string).
@@ -58,5 +58,5 @@ abstract class Type
      *
      * @api
      */
-    abstract public function toPHPInString();
+    abstract public function toPHPInString(): string;
 }

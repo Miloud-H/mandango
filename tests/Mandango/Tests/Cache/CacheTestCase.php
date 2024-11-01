@@ -17,7 +17,7 @@ abstract class CacheTestCase extends TestCase
 {
     protected $cache;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->cache = $this->getCacheDriver();
     }
@@ -81,7 +81,7 @@ abstract class CacheTestCase extends TestCase
         $this->assertFalse($this->cache->has('ups'));
     }
 
-    protected function createTempDir()
+    protected function createTempDir(): string
     {
         return sys_get_temp_dir().
                '/mandango_filesystem_cache_tests'.

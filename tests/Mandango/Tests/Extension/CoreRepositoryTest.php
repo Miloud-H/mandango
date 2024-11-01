@@ -12,6 +12,7 @@
 namespace Mandango\Tests\Extension;
 
 use Mandango\Tests\TestCase;
+use MongoRegex;
 
 class CoreRepositoryTest extends TestCase
 {
@@ -109,7 +110,7 @@ class CoreRepositoryTest extends TestCase
         $this->mandango->getRepository('Model\Article')->save($articles[2]);
 
         $this->assertFalse($articles[2]->isModified());
-        $this->assertSame(4, $this->mandango->getRepository('Model\Article')->getCollection()->find(array('title' => new \MongoRegex('/^foo/')))->count());
+        $this->assertSame(4, $this->mandango->getRepository('Model\Article')->getCollection()->find(array('title' => new MongoRegex('/^foo/')))->count());
     }
 
     public function testSaveShouldConvertIdsToMongoWhenUpdating()
@@ -146,7 +147,7 @@ class CoreRepositoryTest extends TestCase
 
         $this->assertFalse($articles[4]->isModified());
         $this->assertFalse($articles[4]->isModified());
-        $this->assertSame(3, $this->mandango->getRepository('Model\Article')->getCollection()->find(array('title' => new \MongoRegex('/^foo/')))->count());
+        $this->assertSame(3, $this->mandango->getRepository('Model\Article')->getCollection()->find(array('title' => new MongoRegex('/^foo/')))->count());
     }
 
     public function testSaveSaveReferences()
@@ -227,7 +228,7 @@ class CoreRepositoryTest extends TestCase
     {
         // insert
         $article = $this->mandango->create('Model\Article')
-            ->addCategories($category = $this->mandango->create('Model\Category')
+            ->addCategories($this->mandango->create('Model\Category')
                 ->setName('foo')
             )
             ->save()
@@ -236,7 +237,7 @@ class CoreRepositoryTest extends TestCase
 
         // update
         $article
-             ->addCategories($category = $this->mandango->create('Model\Category')
+             ->addCategories($this->mandango->create('Model\Category')
                 ->setName('foo')
             )
             ->save()

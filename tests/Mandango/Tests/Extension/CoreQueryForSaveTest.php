@@ -12,6 +12,7 @@
 namespace Mandango\Tests\Extension;
 
 use Mandango\Tests\TestCase;
+use MongoId;
 
 class CoreQueryForSaveTest extends TestCase
 {
@@ -34,7 +35,7 @@ class CoreQueryForSaveTest extends TestCase
     {
         $article = $this->mandango->create('Model\Article');
         $article->setDocumentData(array(
-            '_id'      => new \MongoId($this->generateObjectId()),
+            '_id'      => new MongoId($this->generateObjectId()),
             'title'    => 'foo',
             'content'  => 'bar',
             'note'     => 'ups',
@@ -60,7 +61,7 @@ class CoreQueryForSaveTest extends TestCase
     public function testDocumentReferencesOneInsert()
     {
         $article = $this->mandango->create('Model\Article')
-            ->setAuthor($this->mandango->create('Model\Author')->setId($id = new \MongoId($this->generateObjectId()))->setIsNew(false))
+            ->setAuthor($this->mandango->create('Model\Author')->setId($id = new MongoId($this->generateObjectId()))->setIsNew(false))
         ;
 
         $this->assertSame(array(
@@ -71,10 +72,10 @@ class CoreQueryForSaveTest extends TestCase
     public function testDocumentReferencesOneUpdate()
     {
         $article = $this->mandango->create('Model\Article')->setDocumentData(array(
-            '_id' => new \MongoId($this->generateObjectId()),
-            'author' => new \MongoId($this->generateObjectId()),
+            '_id' => new MongoId($this->generateObjectId()),
+            'author' => new MongoId($this->generateObjectId()),
         ));
-        $article->setAuthor($this->mandango->create('Model\Author')->setId($id = new \MongoId($this->generateObjectId()))->setIsNew(false));
+        $article->setAuthor($this->mandango->create('Model\Author')->setId($id = new MongoId($this->generateObjectId()))->setIsNew(false));
 
         $this->assertSame(array(
             '$set' => array(
@@ -88,7 +89,7 @@ class CoreQueryForSaveTest extends TestCase
         $categories = array();
         $ids = array();
         for ($i = 1; $i <= 10; $i ++) {
-            $categories[] = $this->mandango->create('Model\Category')->setId($ids[] = new \MongoId($this->generateObjectId()));
+            $categories[] = $this->mandango->create('Model\Category')->setId($ids[] = new MongoId($this->generateObjectId()));
         }
 
         $article = $this->mandango->create('Model\Article');
@@ -128,7 +129,7 @@ class CoreQueryForSaveTest extends TestCase
     public function testDocumentEmbeddedsOneUpdate()
     {
         $article = $this->mandango->create('Model\Article')->setDocumentData(array(
-            '_id' => new \MongoId($this->generateObjectId()),
+            '_id' => new MongoId($this->generateObjectId()),
             'title' => 'foo',
             'source' => array(
                 'name' => 'bar',
@@ -161,7 +162,7 @@ class CoreQueryForSaveTest extends TestCase
     public function testDocumentEmbeddedsOneChange()
     {
         $article = $this->mandango->create('Model\Article')->setDocumentData(array(
-            '_id' => new \MongoId($this->generateObjectId()),
+            '_id' => new MongoId($this->generateObjectId()),
             'title' => 'foo',
             'source' => array(
                 'name' => 'bar',
@@ -196,7 +197,7 @@ class CoreQueryForSaveTest extends TestCase
     public function testDocumentEmbeddedsOneChangeDeep()
     {
         $article = $this->mandango->create('Model\Article')->setDocumentData(array(
-            '_id' => new \MongoId($this->generateObjectId()),
+            '_id' => new MongoId($this->generateObjectId()),
             'title' => 'foo',
             'source' => array(
                 'name' => 'bar',
@@ -224,7 +225,7 @@ class CoreQueryForSaveTest extends TestCase
     public function testDocumentEmbeddedsOneRemove()
     {
         $article = $this->mandango->create('Model\Article')->setDocumentData(array(
-            '_id' => new \MongoId($this->generateObjectId()),
+            '_id' => new MongoId($this->generateObjectId()),
             'title' => 'foo',
             'source' => array(
                 'name' => 'bar',
@@ -245,7 +246,7 @@ class CoreQueryForSaveTest extends TestCase
     public function testDocumentEmbeddedsOneRemoveDeep()
     {
         $article = $this->mandango->create('Model\Article')->setDocumentData(array(
-            '_id' => new \MongoId($this->generateObjectId()),
+            '_id' => new MongoId($this->generateObjectId()),
             'title' => 'foo',
             'source' => array(
                 'name' => 'bar',
@@ -321,7 +322,7 @@ class CoreQueryForSaveTest extends TestCase
     public function testDocumentEmbeddedsManyUpdate()
     {
         $article = $this->mandango->create('Model\Article')->setDocumentData(array(
-            '_id' => new \MongoId($this->generateObjectId()),
+            '_id' => new MongoId($this->generateObjectId()),
             'title' => 'foo',
             'comments' => array(
                 array(

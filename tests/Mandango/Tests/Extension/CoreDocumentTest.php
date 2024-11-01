@@ -11,8 +11,16 @@
 
 namespace Mandango\Tests\Extension;
 
+use InvalidArgumentException;
 use Mandango\Tests\TestCase;
 use Mandango\Group\EmbeddedGroup;
+use Model\Article;
+use Model\Category;
+use Model\CategoryQuery;
+use Model\Comment;
+use Model\Info;
+use MongoId;
+use RuntimeException;
 
 class CoreDocumentTest extends TestCase
 {
@@ -25,7 +33,7 @@ class CoreDocumentTest extends TestCase
 
     public function testFieldsSettersGetters()
     {
-        $article = $this->mandango->create('Model\Article', array($this->mandango->create('Model\Author')));
+        $article = $this->mandango->create(Article::class, [$this->mandango->create('Model\Author')]);
         $this->assertNull($article->getTitle());
         $this->assertNull($article->getContent());
         $this->assertSame($article, $article->setTitle('foo'));
@@ -38,13 +46,13 @@ class CoreDocumentTest extends TestCase
 
     public function testFieldsSetterQueryFieldIfItIsNotQueried()
     {
-        $articleRaw = array(
+        $articleRaw = [
             'title'   => 'foo',
             'content' => 123,
-        );
-        $this->mandango->getRepository('Model\Article')->getCollection()->insert($articleRaw);
+        ];
+        $this->mandango->getRepository(Article::class)->getCollection()->insert($articleRaw);
 
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $article->setId($articleRaw['_id']);
         $article->setIsNew(false);
         $this->assertSame($article, $article->setTitle('foo'));
@@ -55,13 +63,13 @@ class CoreDocumentTest extends TestCase
 
     public function testFieldsGettersQueryValueIfItDoesNotExistInNotNewDocuments()
     {
-        $articleRaw = array(
+        $articleRaw = [
             'title'   => 'foo',
             'content' => 123,
-        );
-        $this->mandango->getRepository('Model\Article')->getCollection()->insert($articleRaw);
+        ];
+        $this->mandango->getRepository(Article::class)->getCollection()->insert($articleRaw);
 
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $article->setId($articleRaw['_id']);
         $article->setIsNew(false);
         $this->assertSame('foo', $article->getTitle());
@@ -72,27 +80,27 @@ class CoreDocumentTest extends TestCase
 
     public function testFieldGetterSaveFieldsQueryCache()
     {
-        $articleRaw = array(
+        $articleRaw = [
             'title'   => 'foo',
             'content' => 123,
-        );
-        $this->mandango->getRepository('Model\Article')->getCollection()->insert($articleRaw);
+        ];
+        $this->mandango->getRepository(Article::class)->getCollection()->insert($articleRaw);
 
-        $query = $this->mandango->getRepository('Model\Article')->createQuery();
+        $query = $this->mandango->getRepository(Article::class)->createQuery();
         $article = $query->one();
 
         $this->assertNull($query->getFieldsCache());
         $article->getTitle();
-        $this->assertSame(array('title' => 1), $query->getFieldsCache());
+        $this->assertSame(['title' => 1], $query->getFieldsCache());
         $article->getContent();
-        $this->assertSame(array('title' => 1, 'content' => 1), $query->getFieldsCache());
+        $this->assertSame(['title' => 1, 'content' => 1], $query->getFieldsCache());
         $article->getNote();
-        $this->assertSame(array('title' => 1, 'content' => 1, 'note' => 1), $query->getFieldsCache());
+        $this->assertSame(['title' => 1, 'content' => 1, 'note' => 1], $query->getFieldsCache());
     }
 
     public function testReferencesOneSettersGetters()
     {
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $this->assertNull($article->getAuthor());
 
         $author = $this->mandango->create('Model\Author');
@@ -101,7 +109,7 @@ class CoreDocumentTest extends TestCase
         $this->assertNull($article->getAuthorId());
 
         $author = $this->mandango->create('Model\Author');
-        $author->setId($id = new \MongoId($this->generateObjectId()));
+        $author->setId($id = new MongoId($this->generateObjectId()));
         $author->setIsNew(false);
         $article->setAuthor($author);
         $this->assertSame($author, $article->getAuthor());
@@ -114,48 +122,48 @@ class CoreDocumentTest extends TestCase
 
     public function testReferencesOneGetterSaveReferenceCache()
     {
-        $articleRaw = array(
+        $articleRaw = [
             'title'   => 'foo',
             'content' => 123,
-        );
-        $this->mandango->getRepository('Model\Article')->getCollection()->insert($articleRaw);
+        ];
+        $this->mandango->getRepository(Article::class)->getCollection()->insert($articleRaw);
 
-        $query = $this->mandango->getRepository('Model\Article')->createQuery();
+        $query = $this->mandango->getRepository(Article::class)->createQuery();
         $article = $query->one();
 
         $this->assertNull($query->getReferencesCache());
         $article->getAuthor();
-        $this->assertSame(array('author'), $query->getReferencesCache());
+        $this->assertSame(['author'], $query->getReferencesCache());
     }
 
     /**
-     * @expectedException \InvalidArgumentException
+     * @expectedException InvalidArgumentException
      */
     public function testReferencesOneSetterClassInvalid()
     {
-        $this->mandango->create('Model\Article')->setAuthor($this->mandango->create('Model\Category'));
+        $this->mandango->create(Article::class)->setAuthor($this->mandango->create(Category::class));
     }
 
     public function testReferencesOneGetterQuery()
     {
         $author = $this->mandango->create('Model\Author')->setName('foo')->save();
 
-        $article = $this->mandango->create('Model\Article')->setAuthorId($author->getId());
+        $article = $this->mandango->create(Article::class)->setAuthorId($author->getId());
         $this->assertSame($author, $article->getAuthor());
     }
 
     /**
-     * @expectedException \RuntimeException
+     * @expectedException RuntimeException
      */
     public function testReferencesOneGetterQueryNotExist()
     {
-        $article = $this->mandango->create('Model\Article')->setAuthorId(new \MongoId($this->generateObjectId()));
+        $article = $this->mandango->create(Article::class)->setAuthorId(new MongoId($this->generateObjectId()));
         $article->getAuthor();
     }
 
     public function testReferencesManyGetter()
     {
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $categories = $article->getCategories();
         $this->assertInstanceOf('Mandango\Group\ReferenceGroup', $categories);
         $this->assertSame($article, $categories->getParent());
@@ -169,9 +177,9 @@ class CoreDocumentTest extends TestCase
             'title'   => 'foo',
             'content' => 123,
         );
-        $this->mandango->getRepository('Model\Article')->getCollection()->insert($articleRaw);
+        $this->mandango->getRepository(Article::class)->getCollection()->insert($articleRaw);
 
-        $query = $this->mandango->getRepository('Model\Article')->createQuery();
+        $query = $this->mandango->getRepository(Article::class)->createQuery();
         $article = $query->one();
 
         $this->assertNull($query->getReferencesCache());
@@ -181,16 +189,16 @@ class CoreDocumentTest extends TestCase
 
     public function testReferencesManyAdd()
     {
-        $article = $this->mandango->create('Model\Article');
-        $category = $this->mandango->create('Model\Category');
+        $article = $this->mandango->create(Article::class);
+        $category = $this->mandango->create(Category::class);
         $this->assertSame($article, $article->addCategories($category));
         $this->assertSame(array($category), $article->getCategories()->getAdd());
     }
 
     public function testReferencesManyRemove()
     {
-        $article = $this->mandango->create('Model\Article');
-        $category = $this->mandango->create('Model\Category');
+        $article = $this->mandango->create(Article::class);
+        $category = $this->mandango->create(Category::class);
         $this->assertSame($article, $article->removeCategories($category));
         $this->assertSame(array($category), $article->getCategories()->getRemove());
     }
@@ -198,8 +206,8 @@ class CoreDocumentTest extends TestCase
     public function testUpdateReferenceFieldsReferencesOne()
     {
         $author = $this->mandango->create('Model\Author');
-        $article = $this->mandango->create('Model\Article')->setAuthor($author);
-        $author->setId(new \MongoId($this->generateObjectId()));
+        $article = $this->mandango->create(Article::class)->setAuthor($author);
+        $author->setId(new MongoId($this->generateObjectId()));
         $author->setIsNew(false);
         $article->updateReferenceFields();
         $this->assertSame($author->getId(), $article->getAuthorId());
@@ -207,11 +215,11 @@ class CoreDocumentTest extends TestCase
 
     public function testUpdateReferenceFieldsReferencesManyNew()
     {
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $categories = $article->getCategories();
         $ids = array();
         for ($i = 1; $i <= 5; $i ++) {
-            $categories->add($this->mandango->create('Model\Category')->setId($ids[] = new \MongoId($this->generateObjectId()))->setIsNew(false));
+            $categories->add($this->mandango->create(Category::class)->setId($ids[] = new MongoId($this->generateObjectId()))->setIsNew(false));
         }
         $article->updateReferenceFields();
         $this->assertSame($ids, $article->getCategoryIds());
@@ -219,55 +227,55 @@ class CoreDocumentTest extends TestCase
 
     public function testUpdateReferenceFieldsReferencesManyNotNew()
     {
-        $article = $this->mandango->create('Model\Article')->setDocumentData(array(
-            '_id' => new \MongoId($this->generateObjectId()),
-            'categories' => $baseIds = array(new \MongoId($this->generateObjectId()), new \MongoId($this->generateObjectId()), new \MongoId($this->generateObjectId()), new \MongoId($this->generateObjectId())),
-            'source' => array(
-                'categories' => $sourceBaseIds = array(new \MongoId($this->generateObjectId()), new \MongoId($this->generateObjectId()), new \MongoId($this->generateObjectId())),
-            ),
-            'comments' => array(
-                array(
-                    'categories' => $commentBaseIds = array(new \MongoId($this->generateObjectId()), new \MongoId($this->generateObjectId()), new \MongoId($this->generateObjectId())),
-                ),
-            ),
-        ));
+        $article = $this->mandango->create(Article::class)->setDocumentData([
+            '_id' => new MongoId($this->generateObjectId()),
+            'categories' => $baseIds = [new MongoId($this->generateObjectId()), new MongoId($this->generateObjectId()), new MongoId($this->generateObjectId()), new MongoId($this->generateObjectId())],
+            'source' => [
+                'categories' => $sourceBaseIds = [new MongoId($this->generateObjectId()), new MongoId($this->generateObjectId()), new MongoId($this->generateObjectId())],
+            ],
+            'comments' => [
+                [
+                    'categories' => $commentBaseIds = [new MongoId($this->generateObjectId()), new MongoId($this->generateObjectId()), new MongoId($this->generateObjectId())],
+                ],
+            ],
+        ]);
         $categories = $article->getCategories();
-        $addIds = array();
+        $addIds = [];
         for ($i = 1; $i <= 3; $i++) {
-            $categories->add($this->mandango->create('Model\Category')->setId($addIds[] = new \MongoId($this->generateObjectId()))->setIsNew(false));
+            $categories->add($this->mandango->create(Category::class)->setId($addIds[] = new MongoId($this->generateObjectId()))->setIsNew(false));
         }
-        $categories->remove($this->mandango->create('Model\Category')->setId($baseIds[1])->setIsNew(false));
-        $categories->remove($this->mandango->create('Model\Category')->setId($baseIds[3])->setIsNew(false));
+        $categories->remove($this->mandango->create(Category::class)->setId($baseIds[1])->setIsNew(false));
+        $categories->remove($this->mandango->create(Category::class)->setId($baseIds[3])->setIsNew(false));
 
         $categories = $article->getSource()->getCategories();
-        $sourceAddIds = array();
+        $sourceAddIds = [];
         for ($i = 1; $i <= 2; $i++) {
-            $categories->add($this->mandango->create('Model\Category')->setId($sourceAddIds[] = new \MongoId($this->generateObjectId()))->setIsNew(false));
+            $categories->add($this->mandango->create(Category::class)->setId($sourceAddIds[] = new MongoId($this->generateObjectId()))->setIsNew(false));
         }
-        $categories->remove($this->mandango->create('Model\Category')->setId($sourceBaseIds[1])->setIsNew(false));
+        $categories->remove($this->mandango->create(Category::class)->setId($sourceBaseIds[1])->setIsNew(false));
 
         $comments = $article->getComments()->getSaved();
         $categories = $comments[0]->getCategories();
-        $commentAddIds = array();
+        $commentAddIds = [];
         for ($i = 1; $i <= 3; $i++) {
-            $categories->add($this->mandango->create('Model\Category')->setId($commentAddIds[] = new \MongoId($this->generateObjectId()))->setIsNew(false));
+            $categories->add($this->mandango->create(Category::class)->setId($commentAddIds[] = new MongoId($this->generateObjectId()))->setIsNew(false));
         }
-        $categories->remove($this->mandango->create('Model\Category')->setId($commentBaseIds[1])->setIsNew(false));
+        $categories->remove($this->mandango->create(Category::class)->setId($commentBaseIds[1])->setIsNew(false));
 
         $article->updateReferenceFields();
-        $this->assertSame(array(
+        $this->assertSame([
             $baseIds[0],
             $baseIds[2],
             $addIds[0],
             $addIds[1],
             $addIds[2],
-        ), $article->getCategoryIds());
-        $this->assertSame(array(
+        ], $article->getCategoryIds());
+        $this->assertSame([
             $sourceBaseIds[0],
             $sourceBaseIds[2],
             $sourceAddIds[0],
             $sourceAddIds[1],
-        ), $article->getSource()->getCategoryIds());
+        ], $article->getSource()->getCategoryIds());
         $this->assertSame(array(
             $commentBaseIds[0],
             $commentBaseIds[2],
@@ -294,7 +302,7 @@ class CoreDocumentTest extends TestCase
 
     public function testSaveReferencesReferencesOne()
     {
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $author1 = $this->mandango->create('Model\Author')->setName('foo');
         $article->setAuthor($author1);
         $source = $this->mandango->create('Model\Source');
@@ -312,14 +320,14 @@ class CoreDocumentTest extends TestCase
     public function testSaveReferencesReferencesMany()
     {
         $articleCategories = array(
-            $this->mandango->create('Model\Category')->setName('c1')->save()->setName('c1u'),
-            $this->mandango->create('Model\Category')->setName('c2')->save()->setName('c1u'),
-            $this->mandango->create('Model\Category')->setName('c3'),
-            $this->mandango->create('Model\Category')->setName('c4'),
+            $this->mandango->create(Category::class)->setName('c1')->save()->setName('c1u'),
+            $this->mandango->create(Category::class)->setName('c2')->save()->setName('c1u'),
+            $this->mandango->create(Category::class)->setName('c3'),
+            $this->mandango->create(Category::class)->setName('c4'),
         );
 
-        $article = $this->mandango->create('Model\Article')->setDocumentData(array(
-            '_id' => new \MongoId($this->generateObjectId()),
+        $article = $this->mandango->create(Article::class)->setDocumentData(array(
+            '_id' => new MongoId($this->generateObjectId()),
             'categories' => array($articleCategories[0]->getId(), $articleCategories[1]->getId()),
         ));
         $categories = $article->getCategories();
@@ -335,10 +343,10 @@ class CoreDocumentTest extends TestCase
 
     public function testSaveReferencesShouldSaveReferencesInEmbeddedsOne()
     {
-        $article = $this->create('Model\Article');
+        $article = $this->create(Article::class);
         $source = $this->create('Model\Source')->setName('foo');
         $author = $this->create('Model\Author')->setName('foo');
-        $category = $this->create('Model\Category')->setName('foo');
+        $category = $this->create(Category::class)->setName('foo');
 
         $source->setAuthor($author);
         $source->addCategories($category);
@@ -352,11 +360,11 @@ class CoreDocumentTest extends TestCase
 
     public function testSaveReferencesShouldSaveReferencesInEmbeddedsMany()
     {
-        $article = $this->create('Model\Article');
+        $article = $this->create(Article::class);
         $comment1 = $this->create('Model\Comment')->setName('foo');
         $comment2 = $this->create('Model\Comment')->setName('foo');
         $author = $this->create('Model\Author')->setName('foo');
-        $category = $this->create('Model\Category')->setName('foo');
+        $category = $this->create(Category::class)->setName('foo');
 
         $comment1->setAuthor($author);
         $comment2->addCategories($category);
@@ -371,7 +379,7 @@ class CoreDocumentTest extends TestCase
 
     public function testEmbeddedsOneSettersGetters()
     {
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $this->assertNull($article->getSource());
 
         $source = $this->mandango->create('Model\Source');
@@ -387,7 +395,7 @@ class CoreDocumentTest extends TestCase
 
     public function testEmbeddedsOneSettersGettersDeep1()
     {
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $source = $this->mandango->create('Model\Source');
         $article->setSource($source);
         $info = $this->mandango->create('Model\Info');
@@ -403,7 +411,7 @@ class CoreDocumentTest extends TestCase
         $source = $this->mandango->create('Model\Source');
         $source->setInfo($info);
         $this->assertNull($info->getRootAndPath());
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $article->setSource($source);
 
         $this->assertSame(array('root' => $article, 'path' => 'source'), $source->getRootAndPath());
@@ -422,9 +430,9 @@ class CoreDocumentTest extends TestCase
                 ),
             ),
         );
-        $this->mandango->getRepository('Model\Article')->getCollection()->insert($articleRaw);
+        $this->mandango->getRepository(Article::class)->getCollection()->insert($articleRaw);
 
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $article->setId($articleRaw['_id']);
         $article->setIsNew(false);
 
@@ -454,9 +462,9 @@ class CoreDocumentTest extends TestCase
                 ),
             ),
         );
-        $this->mandango->getRepository('Model\Article')->getCollection()->insert($articleRaw);
+        $this->mandango->getRepository(Article::class)->getCollection()->insert($articleRaw);
 
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $article->setId($articleRaw['_id']);
         $article->setIsNew(false);
         $source = $this->mandango->create('Model\Source');
@@ -466,7 +474,7 @@ class CoreDocumentTest extends TestCase
         $this->assertNull($source->getInfo());
 
         // deep
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $article->setId($articleRaw['_id']);
         $article->setIsNew(false);
         $source = $article->getSource();
@@ -489,9 +497,9 @@ class CoreDocumentTest extends TestCase
                 ),
             ),
         );
-        $this->mandango->getRepository('Model\Article')->getCollection()->insert($articleRaw);
+        $this->mandango->getRepository(Article::class)->getCollection()->insert($articleRaw);
 
-        $query = $this->mandango->getRepository('Model\Article')->createQuery();
+        $query = $this->mandango->getRepository(Article::class)->createQuery();
         $article = $query->one();
 
         $source = $article->getSource();
@@ -533,7 +541,7 @@ class CoreDocumentTest extends TestCase
 
     public function testEmbeddedsManyGetter()
     {
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $comments = $article->getComments();
         $this->assertInstanceOf('Mandango\Group\EmbeddedGroup', $comments);
         $this->assertSame('Model\Comment', $comments->getDocumentClass());
@@ -549,7 +557,7 @@ class CoreDocumentTest extends TestCase
 
     public function testEmbeddedsManyAdd()
     {
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $comment = $this->mandango->create('Model\Comment');
         $this->assertSame($article, $article->addComments($comment));
         $this->assertSame(array($comment), $article->getComments()->getAdd());
@@ -557,7 +565,7 @@ class CoreDocumentTest extends TestCase
 
     public function testEmbeddedsManyRemove()
     {
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $comment = $this->mandango->create('Model\Comment');
         $this->assertSame($article, $article->removeComments($comment));
         $this->assertSame(array($comment), $article->getComments()->getRemove());
@@ -566,10 +574,10 @@ class CoreDocumentTest extends TestCase
     public function testRelationsOne()
     {
         $information = $this->mandango->create('Model\ArticleInformation')->setName('foo')->save();
-        $article = $this->mandango->create('Model\Article')->setInformation($information)->save();
+        $article = $this->mandango->create(Article::class)->setInformation($information)->save();
         $this->assertSame($article, $information->getArticle());
 
-        $this->mandango->getRepository('Model\Article')->getIdentityMap()->clear();
+        $this->mandango->getRepository(Article::class)->getIdentityMap()->clear();
         $this->assertEquals($article->getId(), $information->getArticle()->getId());
     }
 
@@ -581,7 +589,7 @@ class CoreDocumentTest extends TestCase
         }
         $articles = array();
         for ($i = 0; $i < 10; $i++) {
-            $articles[] = $this->mandango->create('Model\Article')->setTitle('Article'.$i)->save();
+            $articles[] = $this->mandango->create(Article::class)->setTitle('Article'.$i)->save();
         }
 
         $query = $authors[3]->getArticles();
@@ -608,11 +616,11 @@ class CoreDocumentTest extends TestCase
     {
         $categories = array();
         for ($i = 0; $i < 10; $i++) {
-            $categories[] = $this->mandango->create('Model\Category')->setName('Category'.$i)->save();
+            $categories[] = $this->mandango->create(Category::class)->setName('Category'.$i)->save();
         }
         $articles = array();
         for ($i = 0; $i < 10; $i++) {
-            $articles[] = $this->mandango->create('Model\Article')->setTitle('Article'.$i)->save();
+            $articles[] = $this->mandango->create(Article::class)->setTitle('Article'.$i)->save();
         }
 
         $query = $categories[3]->getArticles();
@@ -650,7 +658,7 @@ class CoreDocumentTest extends TestCase
         $articles = array();
         $articlesVotes = array();
         for ($i = 1; $i <= 10; $i++) {
-            $articles[$i] = $article = $this->mandango->create('Model\Article');
+            $articles[$i] = $article = $this->mandango->create(Article::class);
             $article->setTitle('article'.$i);
             $this->mandango->persist($article);
 
@@ -675,14 +683,14 @@ class CoreDocumentTest extends TestCase
 
     public function testResetGroups()
     {
-        $article = $this->mandango->create('Model\Article')
+        $article = $this->mandango->create(Article::class)
             // referencesMany
-            ->addCategories($this->mandango->create('Model\Category'))
+            ->addCategories($this->mandango->create(Category::class))
             // embeddedsMany
             ->addComments($this->mandango->create('Model\Comment'))
             // embeddedsOne with groups
             ->setSource($this->mandango->create('Model\Source')
-                ->addCategories($this->mandango->create('Model\Category'))
+                ->addCategories($this->mandango->create(Category::class))
             )
             // embeddedsMany with groups
             ->addComments($comment = $this->mandango->create('Model\Comment')
@@ -699,10 +707,10 @@ class CoreDocumentTest extends TestCase
 
     public function testSetMethod()
     {
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
 
         // fields
-        $this->assertSame($article, $article->set('title', 'foo'));;
+        $this->assertSame($article, $article->set('title', 'foo'));
         $this->assertSame('foo', $article->getTitle());
 
         // references one
@@ -717,16 +725,16 @@ class CoreDocumentTest extends TestCase
     }
 
     /**
-     * @expectedException \InvalidArgumentException
+     * @expectedException InvalidArgumentException
      */
     public function testSetMethodInvalidDataName()
     {
-        $this->mandango->create('Model\Article')->set('no', 'foo');
+        $this->mandango->create(Article::class)->set('no', 'foo');
     }
 
     public function testGetMethod()
     {
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
 
         // fields
         $article->setTitle('bar');
@@ -750,16 +758,16 @@ class CoreDocumentTest extends TestCase
     }
 
     /**
-     * @expectedException \InvalidArgumentException
+     * @expectedException InvalidArgumentException
      */
     public function testGetMethodInvalidDataName()
     {
-        $this->mandango->create('Model\Article')->get('no');
+        $this->mandango->create(Article::class)->get('no');
     }
 
     public function testFromArray()
     {
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $this->assertSame($article, $article->fromArray(array(
             'id'       => 123,
             'title'    => 'foo',
@@ -821,7 +829,7 @@ class CoreDocumentTest extends TestCase
         $this->assertSame('bar', $commentsAdd[0]->getText());
         $infos = $commentsAdd[0]->getInfos()->getSaved();
         $this->assertSame(2, count($infos));
-        $infosAdd = $commentsAdd[0]->getInfos()->getAdd();
+        $commentsAdd[0]->getInfos()->getAdd();
     }
 
     public function testFromArrayIgnoresIdInEmbeddedDocuments()
@@ -838,7 +846,7 @@ class CoreDocumentTest extends TestCase
     public function testFromArrayReferencesOne()
     {
         $author = $this->mandango->create('Model\Author');
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $article->fromArray(array('author' => $author));
 
         $this->assertSame($author, $article->getAuthor());
@@ -847,10 +855,10 @@ class CoreDocumentTest extends TestCase
     public function testFromArrayReferencesMany()
     {
         $categories = array(
-            $this->mandango->create('Model\Category'),
-            $this->mandango->create('Model\Category'),
+            $this->mandango->create(Category::class),
+            $this->mandango->create(Category::class),
         );
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $article->fromArray(array('categories' => $categories));
 
         $this->assertSame($categories, $article->getCategories()->all());
@@ -858,10 +866,10 @@ class CoreDocumentTest extends TestCase
 
     public function testFromArrayReferencesManyRemoveCurrent()
     {
-        $category1 = $this->mandango->create('Model\Category');
-        $category2 = $this->mandango->create('Model\Category');
+        $category1 = $this->mandango->create(Category::class);
+        $category2 = $this->mandango->create(Category::class);
 
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $article->addCategories($category1);
         $article->fromArray(array('categories' => array($category2)));
 
@@ -870,7 +878,7 @@ class CoreDocumentTest extends TestCase
 
     public function testToArray()
     {
-        $article = $this->mandango->create('Model\Article')
+        $article = $this->mandango->create(Article::class)
             ->setId(123)
             ->setTitle('foo')
             ->setContent('bar')
@@ -892,14 +900,14 @@ class CoreDocumentTest extends TestCase
 
     public function testToArrayInitializeFields()
     {
-        $article = $this->mandango->create('Model\Article')
+        $article = $this->mandango->create(Article::class)
             ->setTitle('foo')
             ->setContent('bar')
             ->setIsActive(false)
             ->save()
         ;
 
-        $article = $this->mandango->create('Model\Article')->setId($article->getId())->setIsNew(false);
+        $article = $this->mandango->create(Article::class)->setId($article->getId())->setIsNew(false);
 
         $this->assertSame(array(
             'id'       => $article->getId(),
@@ -936,19 +944,19 @@ class CoreDocumentTest extends TestCase
         $categories = array();
         $ids = array();
         for ($i = 1; $i <= 10; $i++) {
-            $category = $this->mandango->create('Model\Category')->setName('Category'.$i)->save();
+            $category = $this->mandango->create(Category::class)->setName('Category'.$i)->save();
             if ($i % 2) {
                 $categories[$category->getId()->__toString()] = $category;
                 $ids[] = $category->getId();
             }
         }
 
-        $article = $this->mandango->create('Model\Article')->setCategoryIds($ids);
+        $article = $this->mandango->create(Article::class)->setCategoryIds($ids);
         $this->assertSame($categories, $article->getCategories()->getSaved());
 
         $query = $article->getCategories()->createQuery();
-        $this->assertInstanceOf('Model\CategoryQuery', $query);
-        $this->assertSame(array('_id' => array('$in' => $ids)), $query->getCriteria());
+        $this->assertInstanceOf(CategoryQuery::class, $query);
+        $this->assertSame(['_id' => ['$in' => $ids]], $query->getCriteria());
     }
 
     /*
@@ -957,30 +965,30 @@ class CoreDocumentTest extends TestCase
 
     public function testEmbeddedsManyQueryValueIfItDoesNotExistInNotNewDocument()
     {
-        $articleRaw = array(
-            'comments' => array(
-                array(
+        $articleRaw = [
+            'comments' => [
+                [
                     'name' => 'foo',
                     'text' => 'bar',
-                    'infos' => array(
-                        array(
+                    'infos' => [
+                        [
                             'name' => 'foobar',
                             'line' => 'barfoo',
-                        ),
-                        array(
+                        ],
+                        [
                             'text' => 'ups',
-                        ),
-                    ),
-                ),
-                array(
+                        ],
+                    ],
+                ],
+                [
                     'name' => 'fooups',
                     'text' => 'upsfoo',
-                ),
-            ),
-        );
-        $this->mandango->getRepository('Model\Article')->getCollection()->insert($articleRaw);
+                ],
+            ],
+        ];
+        $this->mandango->getRepository(Article::class)->getCollection()->insert($articleRaw);
 
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $article->setId($articleRaw['_id'])->setIsnew(false);
 
         $comments = $article->getComments()->getSaved();
@@ -994,57 +1002,57 @@ class CoreDocumentTest extends TestCase
         $this->assertSame('foobar', $infos[0]->getName());
         $this->assertNull($infos[0]->getText());
         $this->assertSame('barfoo', $infos[0]->getLine());
-        $this->assertSame(array(), $comments[1]->getInfos()->getSaved());
+        $this->assertSame([], $comments[1]->getInfos()->getSaved());
     }
 
     public function testEmbeddedsManySaveFieldsCacheQuering()
     {
-        $articleRaw = array(
-            'comments' => array(
-                array(
+        $articleRaw = [
+            'comments' => [
+                [
                     'name' => 'foo',
                     'text' => 'bar',
-                    'infos' => array(
-                        array(
+                    'infos' => [
+                        [
                             'name' => 'foobar',
                             'line' => 'barfoo',
-                        ),
-                        array(
+                        ],
+                        [
                             'text' => 'ups',
-                        ),
-                    ),
-                ),
-                array(
+                        ],
+                    ],
+                ],
+                [
                     'name' => 'fooups',
                     'text' => 'upsfoo',
-                ),
-            ),
-        );
-        $this->mandango->getRepository('Model\Article')->getCollection()->insert($articleRaw);
+                ],
+            ],
+        ];
+        $this->mandango->getRepository(Article::class)->getCollection()->insert($articleRaw);
 
-        $query = $this->mandango->getRepository('Model\Article')->createQuery();
+        $query = $this->mandango->getRepository(Article::class)->createQuery();
         $article = $query->one();
 
         $this->assertNull($query->getFieldsCache());
         $comments = $article->getComments();
         $this->assertNull($query->getFieldsCache());
         $savedComments = $comments->getSaved();
-        $this->assertSame(array('comments' => 1), $query->getFieldsCache());
+        $this->assertSame(['comments' => 1], $query->getFieldsCache());
         foreach ($comments as $comment) {
             $comment->getName();
         }
-        $this->assertSame(array('comments' => 1), $query->getFieldsCache());
+        $this->assertSame(['comments' => 1], $query->getFieldsCache());
         $commentNew = $this->mandango->create('Model\Comment');
         $comments->add($commentNew);
         $commentNew->getName();
-        $this->assertSame(array('comments' => 1), $query->getFieldsCache());
-        $savedInfos = $savedComments[0]->getInfos()->getSaved();
-        $this->assertSame(array('comments' => 1), $query->getFieldsCache());
+        $this->assertSame(['comments' => 1], $query->getFieldsCache());
+        $savedComments[0]->getInfos()->getSaved();
+        $this->assertSame(['comments' => 1], $query->getFieldsCache());
     }
 
     public function testEmbeddedsManyNoQueryNewDocument()
     {
-        $this->assertSame(array(), $this->mandango->create('Model\Article')->getComments()->getSaved());
+        $this->assertSame([], $this->mandango->create(Article::class)->getComments()->getSaved());
     }
 
     public function testEmbeddedsManyCount()
@@ -1073,9 +1081,9 @@ class CoreDocumentTest extends TestCase
                 ),
             ),
         );
-        $this->mandango->getRepository('Model\Article')->getCollection()->insert($articleRaw);
+        $this->mandango->getRepository(Article::class)->getCollection()->insert($articleRaw);
 
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $article->setId($articleRaw['_id'])->setIsnew(false);
 
         $this->assertSame(3, $article->getComments()->count());
@@ -1087,8 +1095,8 @@ class CoreDocumentTest extends TestCase
 
     public function testRepository()
     {
-        $this->assertSame($this->mandango->getRepository('Model\Article'), $this->mandango->getRepository('Model\Article'));
-        $this->assertSame($this->mandango->getRepository('Model\Category'), $this->mandango->getRepository('Model\Category'));
+        $this->assertSame($this->mandango->getRepository(Article::class), $this->mandango->getRepository(Article::class));
+        $this->assertSame($this->mandango->getRepository(Category::class), $this->mandango->getRepository(Category::class));
     }
 
     public function testRefresh()
@@ -1098,9 +1106,9 @@ class CoreDocumentTest extends TestCase
             'content'  => 'bar',
             'isActive' => 1,
         );
-        $this->mandango->getRepository('Model\Article')->getCollection()->insert($articleRaw);
+        $this->mandango->getRepository(Article::class)->getCollection()->insert($articleRaw);
 
-        $article = $this->mandango->create('Model\Article')->setId($articleRaw['_id']);
+        $article = $this->mandango->create(Article::class)->setId($articleRaw['_id']);
         $article->setIsNew(false);
         $article->setTitle('ups')->setNote('bump');
         $article->refresh();
@@ -1117,14 +1125,14 @@ class CoreDocumentTest extends TestCase
 
     public function testGetMetadata()
     {
-        $article = $this->mandango->create('Model\Article');
-        $this->assertSame($this->mandango->getMetadataFactory()->getClass('Model\Article'), $article->getMetadata());
+        $article = $this->mandango->create(Article::class);
+        $this->assertSame($this->mandango->getMetadataFactory()->getClass(Article::class), $article->getMetadata());
     }
 
     public function testRootAndPath()
     {
-        $article1 = $this->mandango->create('Model\Article');
-        $article2 = $this->mandango->create('Model\Article');
+        $article1 = $this->mandango->create(Article::class);
+        $article2 = $this->mandango->create(Article::class);
 
         $source = $this->mandango->create('Model\Source');
         $this->assertNull($source->getRootAndPath());
@@ -1139,7 +1147,7 @@ class CoreDocumentTest extends TestCase
         $info = $this->mandango->create('Model\Info');
         $source = $this->mandango->create('Model\Source');
         $source->setInfo($info);
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $article->setSource($source);
 
         $this->assertSame(array('root' => $article, 'path' => 'source'), $source->getRootAndPath());
@@ -1151,7 +1159,7 @@ class CoreDocumentTest extends TestCase
         $info = $this->mandango->create('Model\Info');
         $comment = $this->mandango->create('Model\Comment');
         $comment->getInfos()->add($info);
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $article->getComments()->add($comment);
 
         $this->assertSame(array('root' => $article, 'path' => 'comments'), $article->getComments()->getRootAndPath());
@@ -1165,7 +1173,7 @@ class CoreDocumentTest extends TestCase
 
     public function testDebug()
     {
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
 
         $this->assertTrue(is_array($article->debug()));
     }
@@ -1175,9 +1183,9 @@ class CoreDocumentTest extends TestCase
      */
     public function testSetDocumentData()
     {
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $this->assertSame($article, $article->setDocumentData(array(
-            '_id'         => $id = new \MongoId($this->generateObjectId()),
+            '_id'         => $id = new MongoId($this->generateObjectId()),
             '_query_hash' => $queryHash = md5(1),
             'title'       => 'foo',
             'isActive'    => 1,
@@ -1191,10 +1199,10 @@ class CoreDocumentTest extends TestCase
 
     public function testSetDocumentDataCleaning()
     {
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $article->setTitle('foo');
         $article->setDocumentData(array(
-            '_id'   => new \MongoId($this->generateObjectId()),
+            '_id'   => new MongoId($this->generateObjectId()),
             'title' => 'foo',
         ), true);
         $this->assertFalse($article->isFieldModified('title'));
@@ -1204,7 +1212,7 @@ class CoreDocumentTest extends TestCase
     {
         $book = $this->mandango->create('Model\Book');
         $book->setDocumentData(array(
-            '_id' => new \MongoId($this->generateObjectId()),
+            '_id' => new MongoId($this->generateObjectId()),
         ));
         $this->assertFalse($book->isFieldModified('comment'));
         $this->assertFalse($book->isFieldModified('isHere'));
@@ -1221,9 +1229,9 @@ class CoreDocumentTest extends TestCase
                 'note' => 'fooups',
             ),
         );
-        $this->mandango->getRepository('Model\Article')->getCollection()->insert($articleRaw);
+        $this->mandango->getRepository(Article::class)->getCollection()->insert($articleRaw);
 
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $article->setDocumentData(array(
             '_id' => $articleRaw['_id'],
             'source' => array(),
@@ -1244,52 +1252,52 @@ class CoreDocumentTest extends TestCase
 
     public function testSetDocumentDataEmbeddedsOne()
     {
-        $infoData = array('name' => 234);
-        $sourceData = array('name' => 123, 'info' => $infoData);
-        $article = $this->mandango->create('Model\Article')->setDocumentData(array(
-            '_query_hash' => $queryHash = md5('mongo'),
+        $infoData = ['name' => 234];
+        $sourceData = ['name' => 123, 'info' => $infoData];
+        $article = $this->mandango->create(Article::class)->setDocumentData([
+            '_query_hash' => md5('mongo'),
             'source'      => $sourceData,
-        ));
+        ]);
 
         $source = $article->getSource();
         $this->assertEquals($this->mandango->create('Model\Source')->setDocumentData($sourceData), $source);
-        $this->assertSame(array('root' => $article, 'path' => 'source'), $source->getRootAndPath());
+        $this->assertSame(['root' => $article, 'path' => 'source'], $source->getRootAndPath());
         $info = $source->getInfo();
         $this->assertEquals($this->mandango->create('Model\Info')->setDocumentData($infoData), $info);
-        $this->assertSame(array('root' => $article, 'path' => 'source.info'), $info->getRootAndPath());
+        $this->assertSame(['root' => $article, 'path' => 'source.info'], $info->getRootAndPath());
     }
 
     public function testSetDocumentDataEmbeddedsMany()
     {
-        $infosData = array(
-            array('name' => 'foo', 'text' => 'foobar'),
-            array('name' => 'bar', 'text' => 'barfoo'),
-        );
-        $commentsData = array(
-            array('name' => 'ups', 'text' => 'upsfoo'),
-            array('text' => 'mon', 'line' => 'monfoo', 'infos' => $infosData),
-        );
-        $article = $this->mandango->create('Model\Article')->setDocumentData(array(
-            '_query_hash' => $queryHash = md5('mongodb'),
+        $infosData = [
+            ['name' => 'foo', 'text' => 'foobar'],
+            ['name' => 'bar', 'text' => 'barfoo'],
+        ];
+        $commentsData = [
+            ['name' => 'ups', 'text' => 'upsfoo'],
+            ['text' => 'mon', 'line' => 'monfoo', 'infos' => $infosData],
+        ];
+        $article = $this->mandango->create(Article::class)->setDocumentData([
+            '_query_hash' => md5('mongodb'),
             'comments'    => $commentsData,
-        ));
+        ]);
 
         $comments = $article->getComments();
-        $this->assertEquals(new EmbeddedGroup('Model\Comment', $commentsData), $comments);
+        $this->assertEquals(new EmbeddedGroup(Comment::class), $comments);
         $this->assertSame(array('root' => $article, 'path' => 'comments'), $comments->getRootAndPath());
         $savedComments = $comments->getSaved();
         $this->assertSame(2, count($savedComments));
-        $this->assertEquals($this->mandango->create('Model\Comment')->setDocumentData($commentsData[0]), $savedComments[0]);
-        $this->assertEquals($this->mandango->create('Model\Comment')->setDocumentData($commentsData[1]), $savedComments[1]);
+        $this->assertEquals($this->mandango->create(Comment::class)->setDocumentData($commentsData[0]), $savedComments[0]);
+        $this->assertEquals($this->mandango->create(Comment::class)->setDocumentData($commentsData[1]), $savedComments[1]);
 
         $this->assertSame(0, $savedComments[0]->getInfos()->count());
         $infos = $savedComments[1]->getInfos();
-        $this->assertEquals(new EmbeddedGroup('Model\Info', $infosData), $infos);
+        $this->assertEquals(new EmbeddedGroup(Info::class), $infos);
         $this->assertSame(array('root' => $article, 'path' => 'comments.1.infos'), $infos->getRootAndPath());
         $savedInfos = $infos->getSaved();
         $this->assertSame(2, count($savedComments));
-        $this->assertEquals($this->mandango->create('Model\Info')->setDocumentData($infosData[0]), $savedInfos[0]);
-        $this->assertEquals($this->mandango->create('Model\Info')->setDocumentData($infosData[1]), $savedInfos[1]);
+        $this->assertEquals($this->mandango->create(Info::class)->setDocumentData($infosData[0]), $savedInfos[0]);
+        $this->assertEquals($this->mandango->create(Info::class)->setDocumentData($infosData[1]), $savedInfos[1]);
     }
 
     /*
@@ -1297,13 +1305,13 @@ class CoreDocumentTest extends TestCase
      */
     public function testIsModifiedNewNotModified()
     {
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $this->assertFalse($article->isModified());
     }
 
     public function testIsModifiedNewFieldsModified()
     {
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $article->setLine('bar');
         $this->assertTrue($article->isModified());
     }
@@ -1316,9 +1324,9 @@ class CoreDocumentTest extends TestCase
 
     public function testIsModifiedNotNewFieldsNotModified()
     {
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $article->setDocumentData(array(
-            '_id'      => new \MongoId($this->generateObjectId()),
+            '_id'      => new MongoId($this->generateObjectId()),
             'title'    => 'bar',
             'content'  => 'foo',
             'isActive' => true,
@@ -1328,9 +1336,9 @@ class CoreDocumentTest extends TestCase
 
     public function testIsModifiedNotNewFieldsModified()
     {
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $article->setDocumentData(array(
-            '_id'      => new \MongoId($this->generateObjectId()),
+            '_id'      => new MongoId($this->generateObjectId()),
             'title'    => 'bar',
             'content'  => 'foo',
             'isActive' => true,
@@ -1338,9 +1346,9 @@ class CoreDocumentTest extends TestCase
         $article->setContent('ups');
         $this->assertTrue($article->isModified());
 
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $article->setDocumentData(array(
-            '_id'      => new \MongoId($this->generateObjectId()),
+            '_id'      => new MongoId($this->generateObjectId()),
             'title'    => 'bar',
             'content'  => 'foo',
             'isActive' => true,
@@ -1353,7 +1361,7 @@ class CoreDocumentTest extends TestCase
     {
         $book = $this->mandango->create('Model\Book');
         $book->setDocumentData(array(
-            '_id'   => new \MongoId($this->generateObjectId()),
+            '_id'   => new MongoId($this->generateObjectId()),
             'title' => 'foo',
         ));
         $this->assertFalse($book->isModified());
@@ -1361,7 +1369,7 @@ class CoreDocumentTest extends TestCase
 
     public function testIsModifiedNewEmbeddedsOne()
     {
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $source = $this->mandango->create('Model\Source');
         $article->setSource($source);
         $this->assertFalse($article->isModified());
@@ -1372,7 +1380,7 @@ class CoreDocumentTest extends TestCase
 
         $info = $this->mandango->create('Model\Info');
         $source = $this->mandango->create('Model\Source')->setInfo($info);
-        $article = $this->mandango->create('Model\Article')->setSource($source);
+        $article = $this->mandango->create(Article::class)->setSource($source);
         $this->assertFalse($source->isModified());
         $this->assertFalse($article->isModified());
         $info->setName('bar');
@@ -1382,8 +1390,8 @@ class CoreDocumentTest extends TestCase
 
     public function testIsModifiedNotNewEmbeddedsOne()
     {
-        $article = $this->mandango->create('Model\Article')->setDocumentData(array(
-            '_id' => new \MongoId($this->generateObjectId()),
+        $article = $this->mandango->create(Article::class)->setDocumentData(array(
+            '_id' => new MongoId($this->generateObjectId()),
             'source' => array('name' => 'foo'),
         ));
         $this->assertFalse($article->isModified());
@@ -1397,8 +1405,8 @@ class CoreDocumentTest extends TestCase
         $article->setSource(null);
         $this->assertTrue($article->isModified());
 
-        $article = $this->mandango->create('Model\Article')->setDocumentData(array(
-            '_id' => new \MongoId($this->generateObjectId()),
+        $article = $this->mandango->create(Article::class)->setDocumentData(array(
+            '_id' => new MongoId($this->generateObjectId()),
             'source' => array('info' => array('name' => 'foo')),
         ));
         $source = $article->getSource();
@@ -1418,7 +1426,7 @@ class CoreDocumentTest extends TestCase
 
     public function testIsModifiedNewEmbeddedsMany()
     {
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $comments = $article->getComments();
         $this->assertFalse($article->isModified());
         $comments->remove($this->mandango->create('Model\Comment')->setName('foo'));
@@ -1429,7 +1437,7 @@ class CoreDocumentTest extends TestCase
         $comment->setName('bar');
         $this->assertTrue($article->isModified());
 
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $comments = $article->getComments();
         $comment = $this->mandango->create('Model\Comment');
         $comments->add($comment);
@@ -1450,8 +1458,8 @@ class CoreDocumentTest extends TestCase
 
     public function testIsModifiedNotNewEmbeddedsMany()
     {
-        $article = $this->mandango->create('Model\Article')->setDocumentData(array(
-            '_id' => new \MongoId($this->generateObjectId()),
+        $article = $this->mandango->create(Article::class)->setDocumentData(array(
+            '_id' => new MongoId($this->generateObjectId()),
             'comments' => array(
                 array('name' => 'foo'),
                 array('name' => 'bar'),
@@ -1486,12 +1494,12 @@ class CoreDocumentTest extends TestCase
      */
     public function testClearModifiedFields()
     {
-        $article = $this->mandango->create('Model\Article')->setTitle('foo');
+        $article = $this->mandango->create(Article::class)->setTitle('foo');
         $article->clearModified();
         $this->assertSame('foo', $article->getTitle());
         $this->assertFalse($article->isModified());
 
-        $article = $this->mandango->create('Model\Article')->setDocumentData(array('_id' => new \MongoId($this->generateObjectId()), 'title' => 'foo'))->setTitle('bar');
+        $article = $this->mandango->create(Article::class)->setDocumentData(array('_id' => new MongoId($this->generateObjectId()), 'title' => 'foo'))->setTitle('bar');
         $article->clearModified();
         $this->assertSame('bar', $article->getTitle());
         $this->assertFalse($article->isModified());
@@ -1500,7 +1508,7 @@ class CoreDocumentTest extends TestCase
     public function testClearModifiedEmbeddedsOne()
     {
         $source = $this->mandango->create('Model\Source')->setName('foo');
-        $article = $this->mandango->create('Model\Article')->setSource($source);
+        $article = $this->mandango->create(Article::class)->setSource($source);
         $article->clearModified();
         $this->assertFalse($article->isEmbeddedOneChanged('source'));
         $this->assertSame($source, $article->getSource());
@@ -1508,7 +1516,7 @@ class CoreDocumentTest extends TestCase
         $this->assertFalse($source->isModified());
         $this->assertFalse($article->isModified());
 
-        $article = $this->mandango->create('Model\Article')->setDocumentData(array('_id' => new \MongoId($this->generateObjectId()), 'source' => array('name' => 'foo')));
+        $article = $this->mandango->create(Article::class)->setDocumentData(array('_id' => new MongoId($this->generateObjectId()), 'source' => array('name' => 'foo')));
         $source = $article->getSource();
         $source->setName('bar');
         $article->setSource(null);
@@ -1521,51 +1529,51 @@ class CoreDocumentTest extends TestCase
 
     public function testClearModifiedEmbeddedsMany()
     {
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $comments = $article->getComments();
-        $comment = $this->mandango->create('Model\Comment')->setName('foo');
+        $this->mandango->create(Comment::class)->setName('foo');
         $article->clearModified();
-        $this->assertSame(array(), $comments->getAdd());
+        $this->assertSame([], $comments->getAdd());
         $this->assertFalse($comments->isSavedInitialized());
         $this->assertFalse($article->isModified());
 
-        $article = $this->mandango->create('Model\Article')->setDocumentData(array(
-            '_id' => new \MongoId($this->generateObjectId()),
-            'comments' => array(
-                array('name' => 'foo'),
-                array('name' => 'bar'),
-            ),
-        ));
+        $article = $this->mandango->create(Article::class)->setDocumentData([
+            '_id' => new MongoId($this->generateObjectId()),
+            'comments' => [
+                ['name' => 'foo'],
+                ['name' => 'bar'],
+            ],
+        ]);
         $comments = $article->getComments();
-        $savedComments = $comments->getSaved();
-        $comments->add($this->mandango->create('Model\Comment')->setName('foobar'));
+        $comments->getSaved();
+        $comments->add($this->mandango->create(Comment::class)->setName('foobar'));
         $article->clearModified();
-        $this->assertSame(array(), $comments->getAdd());
+        $this->assertSame([], $comments->getAdd());
         $this->assertFalse($comments->isSavedInitialized());
         $this->assertFalse($article->isModified());
 
-        $article = $this->mandango->create('Model\Article')->setDocumentData(array(
-            '_id' => new \MongoId($this->generateObjectId()),
-            'comments' => array(
-                array('name' => 'foo'),
-                array('name' => 'bar'),
-            ),
-        ));
+        $article = $this->mandango->create(Article::class)->setDocumentData([
+            '_id' => new MongoId($this->generateObjectId()),
+            'comments' => [
+                ['name' => 'foo'],
+                ['name' => 'bar'],
+            ],
+        ]);
         $comments = $article->getComments();
         $savedComments = $comments->getSaved();
         $comments->remove($savedComments[0]);
         $article->clearModified();
-        $this->assertSame(array(), $comments->getRemove());
+        $this->assertSame([], $comments->getRemove());
         $this->assertFalse($comments->isSavedInitialized());
         $this->assertFalse($article->isModified());
 
-        $article = $this->mandango->create('Model\Article')->setDocumentData(array(
-            '_id' => new \MongoId($this->generateObjectId()),
-            'comments' => array(
-                array('name' => 'foo'),
-                array('name' => 'bar'),
-            ),
-        ));
+        $article = $this->mandango->create(Article::class)->setDocumentData([
+            '_id' => new MongoId($this->generateObjectId()),
+            'comments' => [
+                ['name' => 'foo'],
+                ['name' => 'bar'],
+            ],
+        ]);
         $comments = $article->getComments();
         $savedComments = $comments->getSaved();
         $savedComments[1]->setName('foobar');
@@ -1579,7 +1587,7 @@ class CoreDocumentTest extends TestCase
      */
     public function testIsFieldModifiedWithoutValue()
     {
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $this->assertFalse($article->isFieldModified('title'));
         $this->assertFalse($article->isFieldModified('content'));
 
@@ -1590,7 +1598,7 @@ class CoreDocumentTest extends TestCase
 
     public function testIsFieldModifiedChange()
     {
-        $article = $this->mandango->create('Model\Article')->setTitle('foo')->setNote(null);
+        $article = $this->mandango->create(Article::class)->setTitle('foo')->setNote(null);
         $this->assertTrue($article->isFieldModified('title'));
         $this->assertFalse($article->isFieldModified('content'));
         $this->assertFalse($article->isFieldModified('note'));
@@ -1603,9 +1611,9 @@ class CoreDocumentTest extends TestCase
 
     public function testIsFieldModifiedHydrate()
     {
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $article->setDocumentData(array(
-            '_id'     => new \MongoId($this->generateObjectId()),
+            '_id'     => new MongoId($this->generateObjectId()),
             'title'   => 'foo',
             'content' => 'bar',
             'note'    => 'foobar',
@@ -1640,14 +1648,14 @@ class CoreDocumentTest extends TestCase
      */
     public function testGetOriginalFieldValueFieldsWithoutValue()
     {
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $this->assertNull($article->getOriginalFieldValue('title'));
         $this->assertNull($article->getOriginalFieldValue('content'));
     }
 
     public function testGetOriginalFieldValueNew()
     {
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $article->setTitle('foo');
         $this->assertNull($article->getOriginalFieldValue('title'));
         $this->assertNull($article->getOriginalFieldValue('content'));
@@ -1659,9 +1667,9 @@ class CoreDocumentTest extends TestCase
 
     public function testGetOriginalFieldValueNotNew()
     {
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $article->setDocumentData(array(
-            '_id'     => new \MongoId($this->generateObjectId()),
+            '_id'     => new MongoId($this->generateObjectId()),
             'title'   => 'foo',
             'content' => 'bar',
         ));
@@ -1680,7 +1688,7 @@ class CoreDocumentTest extends TestCase
 
     public function testGetOriginalFieldValueDefaultValues()
     {
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $article->setDocumentData(array(
             'title'   => 'foo',
             'content' => 'bar',
@@ -1694,13 +1702,13 @@ class CoreDocumentTest extends TestCase
      */
     public function testGetFieldsModifiedNewNotModified()
     {
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $this->assertSame(array(), $article->getFieldsModified());
     }
 
     public function testGetFieldsModifiedNewModified()
     {
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $article->setTitle('foo');
         $article->setContent('bar');
         $this->assertSame(array(
@@ -1720,9 +1728,9 @@ class CoreDocumentTest extends TestCase
 
     public function testGetFieldsModifiedNotNew()
     {
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $article->setDocumentData(array(
-            '_id'      => new \MongoId($this->generateObjectId()),
+            '_id'      => new MongoId($this->generateObjectId()),
             'title'    => 'bar',
             'content'  => 'foo',
             'isActive' => true,
@@ -1741,7 +1749,7 @@ class CoreDocumentTest extends TestCase
     {
         $book = $this->mandango->create('Model\Book');
         $book->setDocumentData(array(
-            '_id'   => new \MongoId($this->generateObjectId()),
+            '_id'   => new MongoId($this->generateObjectId()),
             'title' => 'foo',
         ));
         $this->assertSame(array(), $book->getFieldsModified());
@@ -1752,8 +1760,8 @@ class CoreDocumentTest extends TestCase
      */
     public function testCleanFieldsModified()
     {
-        $article = $this->mandango->create('Model\Article');
-        $article->setId(new \MongoId($this->generateObjectId()));
+        $article = $this->mandango->create(Article::class);
+        $article->setId(new MongoId($this->generateObjectId()));
         $article->setIsNew(false);
         $article->setTitle('foo');
         $article->setNote('bar');
@@ -1769,7 +1777,7 @@ class CoreDocumentTest extends TestCase
      */
     public function testIsEmbeddedOneChangedNewWithoutValue()
     {
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $this->assertFalse($article->isEmbeddedOneChanged('source'));
         $source = $this->mandango->create('Model\Source');
         $this->assertFalse($source->isEmbeddedOneChanged('info'));
@@ -1779,14 +1787,14 @@ class CoreDocumentTest extends TestCase
     {
         $source = $this->mandango->create('Model\Source')->setInfo($this->mandango->create('Model\Info'));
         $this->assertTrue($source->isEmbeddedOneChanged('info'));
-        $article = $this->mandango->create('Model\Article')->setSource($source);
+        $article = $this->mandango->create(Article::class)->setSource($source);
         $this->assertTrue($article->isEmbeddedOneChanged('source'));
     }
 
     public function testIsEmbeddedOneChangedNotNew()
     {
-        $article = $this->mandango->create('Model\Article')->setDocumentData(array(
-            '_id' => new \MongoId($this->generateObjectId()),
+        $article = $this->mandango->create(Article::class)->setDocumentData(array(
+            '_id' => new MongoId($this->generateObjectId()),
             'title' => 'foo',
             'source' => array(
                 'name' => 'bar',
@@ -1821,15 +1829,15 @@ class CoreDocumentTest extends TestCase
      */
     public function testGetOriginalEmbeddedOneValueWithoutValue()
     {
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $this->assertNull($article->getOriginalEmbeddedOneValue('source'));
-        $source = $this->mandango->create('Model\Article');
+        $source = $this->mandango->create(Article::class);
         $this->assertNull($source->getOriginalEmbeddedOneValue('info'));
     }
 
     public function testGetOriginalEmbeddedOneValueNew()
     {
-        $article = $this->mandango->create('Model\Article')->setSource($this->mandango->create('Model\Source'));
+        $article = $this->mandango->create(Article::class)->setSource($this->mandango->create('Model\Source'));
         $this->assertNull($article->getOriginalEmbeddedOneValue('source'));
         $source = $this->mandango->create('Model\Source')->setInfo($this->mandango->create('Model\Info'));
         $this->assertNull($source->getOriginalEmbeddedOneValue('info'));
@@ -1843,8 +1851,8 @@ class CoreDocumentTest extends TestCase
 
     public function testGetOriginalEmbeddedOneChangedNotNew()
     {
-        $article = $this->mandango->create('Model\Article')->setDocumentData(array(
-            '_id' => new \MongoId($this->generateObjectId()),
+        $article = $this->mandango->create(Article::class)->setDocumentData(array(
+            '_id' => new MongoId($this->generateObjectId()),
             'title' => 'foo',
             'source' => array(
                 'name' => 'bar',
@@ -1883,7 +1891,7 @@ class CoreDocumentTest extends TestCase
      */
     public function testGetEmbeddedsOneChangedNewNotModified()
     {
-        $article = $this->mandango->create('Model\Article');
+        $article = $this->mandango->create(Article::class);
         $this->assertSame(array(), $article->getEmbeddedsOneChanged());
 
         $source = $this->mandango->create('Model\Source');
@@ -1892,7 +1900,7 @@ class CoreDocumentTest extends TestCase
 
     public function testGetEmbeddedsOneChangedNewModified()
     {
-        $article = $this->mandango->create('Model\Article')->setSource($this->mandango->create('Model\Source'));
+        $article = $this->mandango->create(Article::class)->setSource($this->mandango->create('Model\Source'));
         $this->assertSame(array('source' => null), $article->getEmbeddedsOneChanged());
 
         $source = $this->mandango->create('Model\Source')->setInfo($this->mandango->create('Model\Info'));
@@ -1901,8 +1909,8 @@ class CoreDocumentTest extends TestCase
 
     public function testGetEmbeddedsOneNotNew()
     {
-        $article = $this->mandango->create('Model\Article')->setDocumentData(array(
-            '_id' => new \MongoId($this->generateObjectId()),
+        $article = $this->mandango->create(Article::class)->setDocumentData(array(
+            '_id' => new MongoId($this->generateObjectId()),
             'source' => array('name' => 'foo'),
         ));
         $this->assertSame(array(), $article->getEmbeddedsOneChanged());
@@ -1928,7 +1936,7 @@ class CoreDocumentTest extends TestCase
     {
         $info = $this->mandango->create('Model\Info');
         $source = $this->mandango->create('Model\Source')->setInfo($info);
-        $article = $this->mandango->create('Model\Article')->setSource($source);
+        $article = $this->mandango->create(Article::class)->setSource($source);
         $article->clearEmbeddedsOneChanged();
         $this->assertFalse($article->isEmbeddedOneChanged('source'));
 

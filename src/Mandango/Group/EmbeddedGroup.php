@@ -12,6 +12,7 @@
 namespace Mandango\Group;
 
 use Mandango\Archive;
+use Mandango\Document\AbstractDocument;
 use Mandango\Document\Document;
 
 /**
@@ -53,7 +54,7 @@ class EmbeddedGroup extends Group
     /**
      * {@inheritdoc}
      */
-    public function add($documents)
+    public function add(array|AbstractDocument $documents)
     {
         parent::add($documents);
 

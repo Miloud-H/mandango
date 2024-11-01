@@ -11,8 +11,10 @@
 
 namespace Mandango\Tests;
 
+use InvalidArgumentException;
 use Mandango\Mandango;
 use Mandango\Connection;
+use RuntimeException;
 
 class MandangoTest extends TestCase
 {
@@ -90,7 +92,7 @@ class MandangoTest extends TestCase
     }
 
     /**
-     * @expectedException \InvalidArgumentException
+     * @expectedException InvalidArgumentException
      */
     public function testGetConnectionNotExists()
     {
@@ -99,7 +101,7 @@ class MandangoTest extends TestCase
     }
 
     /**
-     * @expectedException \InvalidArgumentException
+     * @expectedException InvalidArgumentException
      */
     public function testRemoveConnectionNotExists()
     {
@@ -108,7 +110,7 @@ class MandangoTest extends TestCase
     }
 
     /**
-     * @expectedException \RuntimeException
+     * @expectedException RuntimeException
      */
     public function testGetDefaultConnectionNotDefaultConnectionName()
     {
@@ -117,7 +119,7 @@ class MandangoTest extends TestCase
     }
 
     /**
-     * @expectedException \RuntimeException
+     * @expectedException RuntimeException
      */
     public function testGetDefaultConnectionNotExist()
     {
@@ -166,7 +168,7 @@ class MandangoTest extends TestCase
         $mandango->getMetadata($documentClass);
     }
 
-    public function getMetadataProvider()
+    public function getMetadataProvider(): array
     {
         return array(
             array('Model\Article'),
@@ -246,7 +248,7 @@ class MandangoTest extends TestCase
     }
 
     /**
-     * @expectedException \InvalidArgumentException
+     * @expectedException InvalidArgumentException
      */
     public function testGetRepositoryNotValidEmbeddedDocumentClass()
     {
@@ -254,7 +256,7 @@ class MandangoTest extends TestCase
     }
 
     /**
-     * @expectedException \InvalidArgumentException
+     * @expectedException InvalidArgumentException
      */
     public function testGetRepositoryNotValidOtherClass()
     {

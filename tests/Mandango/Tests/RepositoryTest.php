@@ -19,10 +19,10 @@ use Mandango\Query;
 
 class Repository extends BaseRepository
 {
-    protected $documentClass = 'MyDocument';
+    protected string $documentClass = 'MyDocument';
     protected $isFile = true;
-    protected $connectionName = 'foo';
-    protected $collectionName = 'bar';
+    protected ?string $connectionName = 'foo';
+    protected string $collectionName = 'bar';
 
     public function idToMongo($id)
     {

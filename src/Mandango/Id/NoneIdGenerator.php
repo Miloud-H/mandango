@@ -11,8 +11,6 @@
 
 namespace Mandango\Id;
 
-use Mandango\Document\Document;
-
 /**
  * Does not generate anything.
  *
@@ -25,7 +23,7 @@ class NoneIdGenerator extends BaseIdGenerator
     /**
      * {@inheritdoc}
      */
-    public function getCode(array $options)
+    public function getCode(array $options): string
     {
         return <<<EOF
 if (null !== \$document->getId()) {
@@ -37,7 +35,7 @@ EOF;
     /**
      * {@inheritdoc}
      */
-    public function getToMongoCode()
+    public function getToMongoCode(): string
     {
         return '';
     }

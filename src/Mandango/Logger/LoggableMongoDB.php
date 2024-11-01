@@ -11,20 +11,23 @@
 
 namespace Mandango\Logger;
 
+use MongoCollection;
+use MongoDB;
+
 /**
  * A loggable MongoDB.
  *
  * @author Pablo Díez <pablodip@gmail.com>
  */
-class LoggableMongoDB extends \MongoDB
+class LoggableMongoDB extends MongoDB
 {
-    private $mongo;
-    private $time;
+    private LoggableMongo $mongo;
+    private Time $time;
 
     /**
      * Constructor.
      *
-     * @param \Mandango\Logger\LoggableMongo $mongo A LoggableMongo instance.
+     * @param LoggableMongo $mongo A LoggableMongo instance.
      * @param string                         $name  The database name.
      */
     public function __construct(LoggableMongo $mongo, $name)
@@ -38,9 +41,9 @@ class LoggableMongoDB extends \MongoDB
     /**
      * Returns the LoggableMongo.
      *
-     * @return \Mandango\Logger\LoggableMongo The LoggableMongo.
+     * @return LoggableMongo The LoggableMongo.
      */
-    public function getMongo()
+    public function getMongo(): LoggableMongo
     {
         return $this->mongo;
     }
@@ -50,7 +53,7 @@ class LoggableMongoDB extends \MongoDB
      *
      * @param array $log The log.
      */
-    public function log(array $log)
+    public function log(array $log): void
     {
         $this->mongo->log(array_merge(array(
             'database' => $this->__toString()
@@ -60,17 +63,17 @@ class LoggableMongoDB extends \MongoDB
     /**
      * command.
      */
-    public function command($command, array $options = array())
+    public function command(array $data, $options = []): array
     {
         $this->time->start();
-        $return = parent::command($command, $options);
+        $return = parent::command($data, $options);
         $time = $this->time->stop();
 
-        $this->log(array(
+        $this->log([
             'type'    => 'command',
             'options' => $options,
             'time'    => $time,
-        ));
+        ]);
 
         return $return;
     }
@@ -78,18 +81,16 @@ class LoggableMongoDB extends \MongoDB
     /**
      * createCollection.
      */
-    public function createCollection($name, $capped = false, $size = 0, $max = 0)
+    public function createCollection($name, $options = false): MongoCollection
     {
         $this->time->start();
-        $return = parent::createCollection($name, $capped, $size, $max);
+        $return = parent::createCollection($name, $options);
         $time = $this->time->stop();
 
         $this->log(array(
             'type'   => 'createCollection',
             'name'   => $name,
-            'capped' => $capped,
-            'size'   => $size,
-            'max'    => $max,
+            'capped' => $options,
             'time'    => $time,
         ));
 
@@ -99,18 +100,18 @@ class LoggableMongoDB extends \MongoDB
     /**
      * createDbRef.
      */
-    public function createDBRef($collection, $a)
+    public function createDBRef($collection, $document_or_id): array
     {
         $this->time->start();
-        $return = parent::createDBRef($collection, $a);
+        $return = parent::createDBRef($collection, $document_or_id);
         $time = $this->time->stop();
 
-        $this->log(array(
+        $this->log([
             'type'       => 'createDBRef',
             'collection' => $collection,
-            'a'          => $a,
+            'a'          => $document_or_id,
             'time'       => $time,
-        ));
+        ]);
 
         return $return;
     }
@@ -118,16 +119,16 @@ class LoggableMongoDB extends \MongoDB
     /**
      * drop.
      */
-    public function drop()
+    public function drop(): array
     {
         $this->time->start();
         $return = parent::drop();
         $time = $this->time->stop();
 
-        $this->log(array(
+        $this->log([
             'type' => 'drop',
             'time' => $time,
-        ));
+        ]);
 
         return $return;
     }
@@ -135,18 +136,18 @@ class LoggableMongoDB extends \MongoDB
     /**
      * execute.
      */
-    public function execute($code, array $args = array())
+    public function execute($code, array $args = []): array
     {
         $this->time->start();
         $return = parent::execute($code, $args);
         $time = $this->time->stop();
 
-        $this->log(array(
+        $this->log([
             'type' => 'execute',
             'code' => $code,
             'args' => $args,
             'time' => $time,
-        ));
+        ]);
 
         return $return;
     }
@@ -154,17 +155,17 @@ class LoggableMongoDB extends \MongoDB
     /**
      * getDBRef.
      */
-    public function getDBRef($ref)
+    public function getDBRef($ref): array
     {
         $this->time->start();
         $return = parent::getDBRef($ref);
         $time = $this->time->stop();
 
-        $this->log(array(
+        $this->log([
             'type' => 'getDBRef',
             'ref'  => $ref,
             'time' => $time,
-        ));
+        ]);
 
         return $return;
     }
@@ -172,16 +173,16 @@ class LoggableMongoDB extends \MongoDB
     /**
      * listCollections.
      */
-    public function listCollections($includeSystemCollections = false)
+    public function listCollections($includeSystemCollections = false): array
     {
         $this->time->start();
         $return = parent::listCollections($includeSystemCollections);
         $time = $this->time->stop();
 
-        $this->log(array(
+        $this->log([
             'type' => 'listCollections',
             'time' => $time,
-        ));
+        ]);
 
         return $return;
     }
@@ -189,7 +190,7 @@ class LoggableMongoDB extends \MongoDB
     /**
      * selectCollection.
      */
-    public function selectCollection($name)
+    public function selectCollection($name): LoggableMongoCollection
     {
         return new LoggableMongoCollection($this, $name);
     }
@@ -205,7 +206,7 @@ class LoggableMongoDB extends \MongoDB
     /*
      * getGridFS.
      */
-    public function getGridFS($prefix = 'fs')
+    public function getGridFS($prefix = 'fs'): LoggableMongoGridFS
     {
         return new LoggableMongoGridFS($this, $prefix);
     }
