@@ -55,7 +55,7 @@ abstract class EmbeddedDocument extends AbstractDocument
      *
      * @api
      */
-    public function getRootAndPath(): array
+    public function getRootAndPath(): ?array
     {
         return Archive::getOrDefault($this, 'root_and_path', null);
     }

@@ -13,6 +13,7 @@ namespace Mandango;
 
 use InvalidArgumentException;
 use Mandango\Cache\CacheInterface;
+use Mandango\Document\AbstractDocument;
 use Mandango\Document\Document;
 use RuntimeException;
 
@@ -32,7 +33,7 @@ class Mandango
     private $loggerCallable;
     private UnitOfWorkInterface $unitOfWork;
     private array $connections;
-    private ?string $defaultConnectionName;
+    private ?string $defaultConnectionName = null;
     private array $repositories;
 
     /**
@@ -282,7 +283,7 @@ class Mandango
      *
      * @api
      */
-    public function create(string $documentClass, array $initializeArgs = []): Document
+    public function create(string $documentClass, array $initializeArgs = []): AbstractDocument
     {
         $document = new $documentClass($this);
         $document->initializeDefaults();

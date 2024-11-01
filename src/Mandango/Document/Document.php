@@ -25,7 +25,7 @@ use MongoId;
 abstract class Document extends AbstractDocument
 {
     private bool $isNew = true;
-    private ?MongoId $id;
+    private $id;
 
     /**
      * Returns the repository.
@@ -44,7 +44,7 @@ abstract class Document extends AbstractDocument
      *
      * @return Document The document (fluent interface).
      */
-    public function setId(MongoId $id): self
+    public function setId($id): self
     {
         $this->id = $id;
 
@@ -58,7 +58,7 @@ abstract class Document extends AbstractDocument
      *
      * @api
      */
-    public function getId(): ?MongoId
+    public function getId()
     {
         return $this->id;
     }

@@ -32,13 +32,13 @@ abstract class Repository
      */
     protected string $documentClass;
     protected bool $isFile;
-    protected ?string $connectionName;
+    protected ?string $connectionName = null;
     protected string $collectionName;
 
     private Mandango $mandango;
     private IdentityMapInterface $identityMap;
-    private ?ConnectionInterface $connection;
-    private ?MongoCollection $collection;
+    private ?ConnectionInterface $connection = null;
+    private ?MongoCollection $collection = null;
 
     /**
      * Constructor.

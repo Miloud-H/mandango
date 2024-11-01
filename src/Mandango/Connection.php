@@ -31,10 +31,10 @@ class Connection implements ConnectionInterface
     private array $options;
 
     private $loggerCallable;
-    private ?array $logDefault;
+    private ?array $logDefault = null;
 
-    private ?MongoClient $mongo;
-    private ?MongoDB $mongoDB;
+    private ?MongoClient $mongo = null;
+    private ?MongoDB $mongoDB = null;
 
     /**
      * Constructor.

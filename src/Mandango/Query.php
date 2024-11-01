@@ -34,14 +34,14 @@ abstract class Query implements Countable, IteratorAggregate
     private array $criteria;
     private array $fields;
     private array $references;
-    private array $sort;
-    private ?int $limit;
-    private ?int $skip;
-    private ?int $batchSize;
-    private ?array $hint;
-    private ?bool $slaveOkay;
+    private ?array $sort = [];
+    private ?int $limit = null;
+    private ?int $skip = null;
+    private ?int $batchSize = null;
+    private ?array $hint = null;
+    private ?bool $slaveOkay = null;
     private false $snapshot;
-    private ?int $timeout;
+    private ?int $timeout = null;
 
     /**
      * Constructor.
